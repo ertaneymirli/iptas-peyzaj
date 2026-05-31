@@ -171,6 +171,17 @@ function formuDoldur(m) {
 
     document.getElementById("periyodikBakim").value = m.periyodikBakim || "";
     document.getElementById("periyodikBakimTuru").value = m.periyodikBakimTuru || "";
+    if ((m.periyodikBakimTuru || "") === "Kendim Belirleyeceğim") {
+
+        document.getElementById("belirliGunlerDiv").style.display = "block";
+
+        document.getElementById("belirliGunler").value =
+            m.belirliGunler || "";
+
+    } else {
+
+        document.getElementById("belirliGunlerDiv").style.display = "none";
+    }
     document.getElementById("aciklama").value = m.aciklama || "";
 }
 
