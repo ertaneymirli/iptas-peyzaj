@@ -1,76 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Remove="wwwroot\admin.css" />
-    <Content Remove="wwwroot\admin.html" />
-    <Content Remove="wwwroot\admin.js" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-detay-goster.css" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-detay-goster.html" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-detay-goster.js" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-takvimi.css" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-takvimi.html" />
-    <Content Remove="wwwroot\pages\bakim-takvimi\bakim-takvimi.js" />
-    <Content Remove="wwwroot\pages\musteriler\musteri-ekle.css" />
-    <Content Remove="wwwroot\pages\musteriler\musteri-ekle.html" />
-    <Content Remove="wwwroot\pages\musteriler\musteri-ekle.js" />
-    <Content Remove="wwwroot\pages\musteriler\musteriler.css" />
-    <Content Remove="wwwroot\pages\musteriler\musteriler.html" />
-    <Content Remove="wwwroot\pages\musteriler\musteriler.js" />
-    <Content Remove="wwwroot\pages\teklif\teklif-ekle.css" />
-    <Content Remove="wwwroot\pages\teklif\teklif-ekle.html" />
-    <Content Remove="wwwroot\pages\teklif\teklif-ekle.js" />
-    <Content Remove="wwwroot\pages\teklif\teklifler.css" />
-    <Content Remove="wwwroot\pages\teklif\teklifler.html" />
-    <Content Remove="wwwroot\pages\teklif\teklifler.js" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Google.Cloud.Firestore" Version="4.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="wwwroot\admin.html" />
-    <None Include="wwwroot\admin.css" />
-    <None Include="wwwroot\admin.js" />
-    <None Include="wwwroot\login.css" />
-    <None Include="wwwroot\index.html" />
-    <None Include="wwwroot\login.js" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-detay-goster.css" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-detay-goster.html" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-detay-goster.js" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-takvimi.css" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-takvimi.html" />
-    <None Include="wwwroot\pages\bakim-takvimi\bakim-takvimi.js" />
-    <None Include="wwwroot\pages\teklif\teklif-ekle.css" />
-    <None Include="wwwroot\pages\teklif\teklif-ekle.html" />
-    <None Include="wwwroot\pages\teklif\teklif-ekle.js" />
-    <None Include="wwwroot\pages\teklif\teklifler.css" />
-    <None Include="wwwroot\pages\teklif\teklifler.html" />
-    <None Include="wwwroot\pages\teklif\teklifler.js" />
-    <None Include="wwwroot\pages\musteriler\musteriler.css" />
-    <None Include="wwwroot\pages\musteriler\musteri-ekle.css" />
-    <None Include="wwwroot\pages\musteriler\musteri-ekle.html" />
-    <None Include="wwwroot\pages\musteriler\musteri-ekle.js" />
-    <None Include="wwwroot\pages\musteriler\musteriler.html" />
-    <None Include="wwwroot\pages\musteriler\musteriler.js" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Google.Cloud.Firestore" Version="4.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Backend\BakimPlanlari\Models\DTO\" />
-    <Folder Include="Backend\Controllers\" />
-    <Folder Include="Backend\Models\DTO\" />
-    <Folder Include="Backend\Teklifler\Models\DTO\" />
-    <Folder Include="Backend\musteriler\Models\DTO\" />
-    <Folder Include="Backend\Personeller\Models\DTO\" />
-    <Folder Include="wwwroot\pages\personeller\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Folder Include="Backend\BakimPlanlari\Models\DTO\" />
+		<Folder Include="Backend\Controllers\" />
+		<Folder Include="Backend\Models\DTO\" />
+		<Folder Include="Backend\Teklifler\Models\DTO\" />
+		<Folder Include="Backend\musteriler\Models\DTO\" />
+		<Folder Include="Backend\Personeller\Models\DTO\" />
+		<Folder Include="wwwroot\pages\personeller\" />
+	</ItemGroup>
 
 </Project>
