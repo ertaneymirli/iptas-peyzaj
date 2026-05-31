@@ -27,7 +27,7 @@
             method = "PUT";
         }
 
-        const response = await fetch(url, {
+        const response = await apiFetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(musteri)

@@ -9,6 +9,7 @@
 	<ItemGroup>
 		<PackageReference Include="Google.Cloud.Firestore" Version="4.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+		<PackageReference Include="SkiaSharp" Version="3.119.4" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 	</ItemGroup>
 

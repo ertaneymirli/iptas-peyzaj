@@ -2,6 +2,7 @@
 using IptasPeyzajApi.Backend.BakimPlanlari.Models;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
 using IptasPeyzajApi.Backend.Musteriler.Models;
+using SkiaSharp;
 
 namespace IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
 
@@ -232,13 +233,6 @@ public class BakimPlaniHelper
         if (file == null || file.Length == 0)
             return string.Empty;
 
-        string extension = Path.GetExtension(file.FileName).ToLower();
-
-        string[] izinliUzantilar = [".jpg", ".jpeg", ".png", ".webp"];
-
-        if (!izinliUzantilar.Contains(extension))
-            throw new Exception("Sadece jpg, jpeg, png veya webp yüklenebilir.");
-
         string uploadsPath = Path.Combine(
             Directory.GetCurrentDirectory(),
             "wwwroot",
@@ -249,11 +243,37 @@ public class BakimPlaniHelper
         if (!Directory.Exists(uploadsPath))
             Directory.CreateDirectory(uploadsPath);
 
-        string fileName = $"{Guid.NewGuid()}{extension}";
+        string fileName = $"{Guid.NewGuid()}.jpg";
         string fullPath = Path.Combine(uploadsPath, fileName);
 
-        using FileStream stream = new(fullPath, FileMode.Create);
-        await file.CopyToAsync(stream);
+        using var inputStream = file.OpenReadStream();
+
+        using var original = SKBitmap.Decode(inputStream);
+
+        if (original == null)
+            throw new Exception("Resim okunamadı.");
+
+        // MAX GENİŞLİK
+        int yeniGenislik = 1000;
+
+        int yeniYukseklik =
+            (int)((float)original.Height / original.Width * yeniGenislik);
+
+        using var resized = original.Resize(
+      new SKImageInfo(yeniGenislik, yeniYukseklik),
+      SKSamplingOptions.Default
+  );
+
+        if (resized == null)
+            throw new Exception("Resim küçültülemedi.");
+
+        using var image = SKImage.FromBitmap(resized);
+
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 65);
+
+        using var stream = File.OpenWrite(fullPath);
+
+        data.SaveTo(stream);
 
         return $"/uploads/bakimlar/{fileName}";
     }
