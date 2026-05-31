@@ -33,6 +33,7 @@ if (!kullanici) {
 }
 
 window.onload = function () {
+    yetkiKontrolEt();
     anaSayfaGoster();
 };
 
@@ -194,4 +195,15 @@ function cikis() {
     localStorage.removeItem("rol");
     localStorage.removeItem("token");
     window.location.href = "index.html";
+}
+const rol = localStorage.getItem("rol");
+
+function yetkiKontrolEt() {
+    if (rol === "1") {
+        return;
+    }
+
+    document.querySelectorAll("[data-admin]").forEach(x => {
+        x.style.display = "none";
+    });
 }

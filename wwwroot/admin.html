@@ -22,12 +22,23 @@
 
             <nav>
                 <a href="#" onclick="anaSayfaGoster()">Ana Sayfa</a>
-                <a href="#" onclick="sayfaYukle('pages/musteriler/musteriler.html')">Müşteriler</a>
-                <a href="#">Yapılacak İşler</a>
-                <a href="#" onclick="sayfaYukle('pages/bakim-takvimi/bakim-takvimi.html')">Bakım Takvimi</a>
-                <a href="#" onclick="sayfaYukle('pages/teklif/teklifler.html')">Teklifler</a>
-                <a href="#" onclick="sayfaYukle('pages/personeller/personeller.html')">Personeller</a>
-                <a href="#" onclick="sayfaYukle('pages/kullanicilar/kullanicilar.html')">Kullanıcılar</a>
+                <a href="#" onclick="sayfaYukle('pages/musteriler/musteriler.html')" data-admin>
+                    Müşteriler
+                </a>
+                <a href="#" onclick="sayfaYukle('pages/bakim-takvimi/bakim-takvimi.html')">
+                    Bakım Takvimi
+                </a>
+
+                <a href="#" onclick="sayfaYukle('pages/teklif/teklifler.html')" data-admin>
+                    Teklifler
+                </a>
+
+                <a href="#" onclick="sayfaYukle('pages/personeller/personeller.html')" data-admin>
+                    Personeller
+                </a>
+                <a href="#" onclick="sayfaYukle('pages/kullanicilar/kullanicilar.html')" data-admin>
+                    Kullanıcılar
+                </a>
                 <a href="#" onclick="cikis()">Çıkış Yap</a>
             </nav>
         </aside>

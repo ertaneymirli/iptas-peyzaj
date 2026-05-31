@@ -34,7 +34,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
 
             localStorage.setItem("token", token);
             localStorage.setItem("kullanici", JSON.stringify(kullanici));
-            /*localStorage.setItem("rol", kullanici.rol || kullanici.Rol);*/
+            localStorage.setItem("rol", kullanici.rol || kullanici.Rol);
 
             setTimeout(() => {
                 window.location.href = "/admin.html";
