@@ -37,7 +37,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
             /*localStorage.setItem("rol", kullanici.rol || kullanici.Rol);*/
 
             setTimeout(() => {
-                window.location.href = "admin.html";
+                window.location.href = "/admin.html";
             }, 800);
         
         } else {
