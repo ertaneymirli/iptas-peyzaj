@@ -40,7 +40,18 @@
             alert("İşlem başarısız.");
         }
     });
+  
 }
+document.getElementById("periyodikBakimTuru").addEventListener("change", function () {
+    const div = document.getElementById("belirliGunlerDiv");
+
+    if (this.value === "Kendim Belirleyeceğim") {
+        div.style.display = "block";
+    } else {
+        div.style.display = "none";
+        document.getElementById("belirliGunler").value = "";
+    }
+});
 
 function musteriFormVerisiAl() {
     return {
@@ -64,6 +75,7 @@ function musteriFormVerisiAl() {
         bakimTarihi: tarihHazirla(document.getElementById("bakimTarihi").value),
         periyodikBakim: Number(document.getElementById("periyodikBakim").value || 0),
         periyodikBakimTuru: document.getElementById("periyodikBakimTuru").value,
+        belirliGunler: document.getElementById("belirliGunler")?.value ?? "",
         aciklama: document.getElementById("aciklama").value
     };
 }

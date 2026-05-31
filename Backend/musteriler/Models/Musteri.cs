@@ -80,5 +80,7 @@ public class Musteri
     [FirestoreProperty]
     public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
     [FirestoreProperty]
+    public string BelirliGunler { get; set; } = string.Empty;
+    [FirestoreProperty]
     public string DurumKodu { get; set; } = "A"; // A: Aktif, P: Pasif
 }

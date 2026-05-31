@@ -1,6 +1,9 @@
 ﻿let musteriler = [];
 let seciliMusteri = null;
 let formMode = "ekle";
+let aktifMusteriListesi = [];
+let sayfaNo = 1;
+let sayfaBoyutu = 10;
 
 async function musterileriGetir() {
     const response = await apiFetch("/api/Musteriler");
@@ -195,10 +198,17 @@ function satirSil(e, id) {
     musteriSil();
 }
 function tabloyaBas(liste) {
+    aktifMusteriListesi = liste;
+
     const tbody = document.getElementById("musteriListe");
     tbody.innerHTML = "";
 
-    liste.forEach(m => {
+    const baslangic = (sayfaNo - 1) * sayfaBoyutu;
+    const bitis = baslangic + sayfaBoyutu;
+
+    const sayfaListesi = liste.slice(baslangic, bitis);
+
+    sayfaListesi.forEach(m => {
         const tr = document.createElement("tr");
 
         tr.onclick = function () {
@@ -229,4 +239,84 @@ function tabloyaBas(liste) {
 
         tbody.appendChild(tr);
     });
+
+    pagerBas();
+}
+function pagerBas() {
+    const pager = document.getElementById("musteriPager");
+    if (!pager) return;
+
+    const toplamSayfa = Math.ceil(aktifMusteriListesi.length / sayfaBoyutu);
+
+    if (toplamSayfa <= 1) {
+        pager.innerHTML = "";
+        return;
+    }
+
+    let html = "";
+
+    html += `
+        <button onclick="sayfaDegistir(1)" ${sayfaNo === 1 ? "disabled" : ""}>
+            <<
+        </button>
+    `;
+
+    html += `
+        <button onclick="sayfaDegistir(${sayfaNo - 1})" ${sayfaNo === 1 ? "disabled" : ""}>
+            <
+        </button>
+    `;
+
+    let baslangic = Math.max(1, sayfaNo - 5);
+    let bitis = Math.min(toplamSayfa, sayfaNo + 5);
+
+    if (sayfaNo <= 5) {
+        baslangic = 1;
+        bitis = Math.min(10, toplamSayfa);
+    }
+
+    if (sayfaNo > toplamSayfa - 5) {
+        baslangic = Math.max(1, toplamSayfa - 9);
+        bitis = toplamSayfa;
+    }
+
+    if (baslangic > 1) {
+        html += `<span class="pager-dots">...</span>`;
+    }
+
+    for (let i = baslangic; i <= bitis; i++) {
+        html += `
+            <button
+                class="${sayfaNo === i ? "active-page" : ""}"
+                onclick="sayfaDegistir(${i})">
+                ${i}
+            </button>
+        `;
+    }
+
+    if (bitis < toplamSayfa) {
+        html += `<span class="pager-dots">...</span>`;
+    }
+
+    html += `
+        <button onclick="sayfaDegistir(${sayfaNo + 1})" ${sayfaNo === toplamSayfa ? "disabled" : ""}>
+            >
+        </button>
+    `;
+
+    html += `
+        <button onclick="sayfaDegistir(${toplamSayfa})" ${sayfaNo === toplamSayfa ? "disabled" : ""}>
+            >>
+        </button>
+    `;
+
+    pager.innerHTML = html;
+}
+function sayfaDegistir(yeniSayfa) {
+    const toplamSayfa = Math.ceil(aktifMusteriListesi.length / sayfaBoyutu);
+
+    if (yeniSayfa < 1 || yeniSayfa > toplamSayfa) return;
+
+    sayfaNo = yeniSayfa;
+    tabloyaBas(aktifMusteriListesi);
 }

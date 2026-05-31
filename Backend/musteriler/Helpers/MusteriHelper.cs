@@ -97,7 +97,8 @@ public class MusteriHelper
             musteri.BakimTarihi,
             musteri.BitisTarihi,
             musteri.PeriyodikBakim,
-            musteri.PeriyodikBakimTuru
+            musteri.PeriyodikBakimTuru,
+            musteri.BelirliGunler
         );
 
         DocumentReference addedDoc = await _db.Collection(CollectionName).AddAsync(musteri);
@@ -128,7 +129,8 @@ public class MusteriHelper
             musteri.BakimTarihi,
             musteri.BitisTarihi,
             musteri.PeriyodikBakim,
-            musteri.PeriyodikBakimTuru
+            musteri.PeriyodikBakimTuru,
+            musteri.BelirliGunler
         );
         bool bakimPlaniDegisti =
     eskiMusteri.BakimTarihi != musteri.BakimTarihi ||
@@ -192,34 +194,92 @@ public class MusteriHelper
     }
 
     private static List<DateTime> BakimTarihleriOlustur(
-        DateTime ilkBakimTarihi,
-        DateTime bitisTarihi,
-        int periyodikBakim,
-        string periyodikBakimTuru)
+ DateTime ilkBakimTarihi,
+ DateTime bitisTarihi,
+ int periyodikBakim,
+ string periyodikBakimTuru,
+ string? belirliGunler = null)
     {
         List<DateTime> tarihler = new();
 
+        // 🔥 KENDİM BELİRLEYECEĞİM
+        if ((periyodikBakimTuru ?? "").ToLower().Contains("kendim"))
+        {
+            if (string.IsNullOrWhiteSpace(belirliGunler))
+                return tarihler;
+
+            var gunler = belirliGunler
+                .Split(",", StringSplitOptions.RemoveEmptyEntries)
+                .Select(x =>
+                {
+                    bool ok = int.TryParse(x.Trim(), out int gun);
+                    return ok ? gun : 0;
+                })
+                .Where(x => x >= 1 && x <= 31)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            if (gunler.Count == 0)
+                return tarihler;
+
+            DateTime ay = DateTime.SpecifyKind(
+     new DateTime(
+         ilkBakimTarihi.Year,
+         ilkBakimTarihi.Month,
+         1
+     ),
+     DateTimeKind.Utc
+ );
+
+            while (ay <= bitisTarihi)
+            {
+                foreach (var gun in gunler)
+                {
+                    int ayinSonGunu = DateTime.DaysInMonth(ay.Year, ay.Month);
+
+                    if (gun > ayinSonGunu)
+                        continue;
+
+                    DateTime tarih = DateTime.SpecifyKind(
+    new DateTime(ay.Year, ay.Month, gun),
+    DateTimeKind.Utc
+);
+
+                    if (tarih >= ilkBakimTarihi && tarih <= bitisTarihi)
+                        tarihler.Add(tarih);
+                }
+
+                ay = ay.AddMonths(1);
+            }
+
+            return tarihler;
+        }
+
+        // 🔥 NORMAL SİSTEM
         if (periyodikBakim <= 0)
             return tarihler;
 
-        DateTime tarih = ilkBakimTarihi;
+        DateTime tarihNormal = ilkBakimTarihi;
 
-        while (tarih <= bitisTarihi)
+        while (tarihNormal <= bitisTarihi)
         {
-            tarihler.Add(tarih);
+            tarihler.Add(tarihNormal);
 
-            tarih = periyodikBakimTuru.ToLower() switch
+            tarihNormal = (periyodikBakimTuru ?? "").ToLower() switch
             {
-                "gün" or "gun" => tarih.AddDays(periyodikBakim),
-                "hafta" => tarih.AddDays(periyodikBakim * 7),
-                "ay" => tarih.AddMonths(periyodikBakim),
-                "yıl" or "yil" => tarih.AddYears(periyodikBakim),
-                _ => tarih.AddMonths(periyodikBakim)
+                "gün" or "gun" => tarihNormal.AddDays(periyodikBakim),
+                "hafta" => tarihNormal.AddDays(periyodikBakim * 7),
+                "ay" => tarihNormal.AddMonths(periyodikBakim),
+                "yıl" or "yil" => tarihNormal.AddYears(periyodikBakim),
+                _ => tarihNormal.AddMonths(periyodikBakim)
             };
         }
 
         return tarihler;
-    }
+
+}
+
     public async Task<bool> MusteriDurumDegistir(string id, string durumKodu)
     {
         DocumentReference docRef = _db.Collection(CollectionName).Document(id);

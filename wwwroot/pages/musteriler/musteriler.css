@@ -47,11 +47,12 @@ tbody tr {
         font-weight: bold;
     }
 
+/* MODAL */
 .modal {
     position: fixed;
     top: 0;
-    left: 250px; /* sidebar genişliği kadar it */
-    width: calc(100% - 250px); /* sağ alanı kapsa */
+    left: 250px;
+    width: calc(100% - 250px);
     height: 100%;
     background: rgba(0,0,0,0.45);
     display: flex;
@@ -95,28 +96,35 @@ tbody tr {
         border-radius: 50%;
         cursor: pointer;
     }
+
+/* İŞLEM BUTONLARI */
 .islem-btns {
     display: flex;
     gap: 6px;
+    flex-wrap: nowrap;
 }
 
 .btn-edit,
-.btn-delete {
+.btn-delete,
+.btn-active {
     border: none;
-    padding: 6px 8px;
+    padding: 6px 9px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
+    color: white;
 }
 
 .btn-edit {
     background: #1f7a3f;
-    color: white;
 }
 
 .btn-delete {
     background: #b00020;
-    color: white;
+}
+
+.btn-active {
+    background: #2563eb;
 }
 
 .btn-edit:hover {
@@ -126,15 +134,48 @@ tbody tr {
 .btn-delete:hover {
     background: #7a0015;
 }
-.btn-active {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 6px 9px;
-    border-radius: 6px;
-    cursor: pointer;
+
+.btn-active:hover {
+    background: #1d4ed8;
 }
 
-    .btn-active:hover {
-        background: #1d4ed8;
+/* PAGER */
+.pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+    .pager button {
+        min-width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 8px;
+        background: #f1f1f1;
+        color: #174d2a;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
     }
+
+        .pager button:hover {
+            background: #ddd;
+        }
+
+        .pager button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .pager .active-page {
+        background: #1f7a3f;
+        color: white;
+    }
+.pager-dots {
+    padding: 0 6px;
+    font-weight: bold;
+    color: #174d2a;
+}

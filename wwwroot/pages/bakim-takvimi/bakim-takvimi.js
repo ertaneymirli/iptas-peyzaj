@@ -6,6 +6,9 @@ let siralamaKolon = "";
 let siralamaYon = "asc"; // asc | desc
 let personeller = [];
 let seciliPersoneller = [];
+let bakimSayfaNo = 1;
+let bakimSayfaBoyutu = 10;
+let bakimPagerListesi = [];
 
 async function bakimlariGetir() {
     const response = await apiFetch("/api/BakimPlanlari");
@@ -20,6 +23,7 @@ async function bakimlariGetir() {
     bakimlar = await response.json();
     tumBakimListesi = bakimlar;
     aktifBakimListesi = bakimlar;
+    bakimSayfaNo = 1;
     bakimlariTabloyaBas(bakimlar);
 }
 
@@ -29,11 +33,13 @@ async function bakimlariDurumaGoreGetir(durumKodu) {
     }
 
     const filtreliListe = bakimlar.filter(x => x.durumKodu === durumKodu);
+    bakimSayfaNo = 1;
     bakimlariTabloyaBas(filtreliListe);
 }
 
 function bakimlariTabloyaBas(liste) {
 
+    bakimPagerListesi = liste;
 
     const tbody = document.getElementById("bakimListe");
     if (!tbody) return;
@@ -41,7 +47,12 @@ function bakimlariTabloyaBas(liste) {
     tbody.innerHTML = "";
     seciliBakim = null;
 
-    liste.forEach(b => {
+    const baslangic = (bakimSayfaNo - 1) * bakimSayfaBoyutu;
+    const bitis = baslangic + bakimSayfaBoyutu;
+
+    const sayfaListesi = liste.slice(baslangic, bitis);
+
+    sayfaListesi.forEach(b => {
         const tr = document.createElement("tr");
 
         tr.onclick = function () {
@@ -51,43 +62,119 @@ function bakimlariTabloyaBas(liste) {
         };
 
         tr.innerHTML = `
-     <td>
-    <div class="action-buttons">
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-view" onclick="bakimDetayGoster(event, '${b.id}')">🔍</button>
 
-      <button class="btn-view" onclick="bakimDetayGoster(event, '${b.id}')">
-    🔍 
-</button>
+                    <button class="btn-success"
+                        onclick="bakimTamamlaPopupAc('${b.id}')">
+                        ✓
+                    </button>
 
-        <button class="btn-success"
-            onclick="bakimTamamlaPopupAc('${b.id}')">
-            ✓ 
-        </button>
+                    <button class="btn-warning"
+                        onclick="bakimErtelePopupAc('${b.id}')">
+                        ⏳
+                    </button>
 
-        <button class="btn-warning"
-            onclick="bakimErtelePopupAc('${b.id}')">
-            ⏳
-        </button>
+                    <button class="btn-danger"
+                        onclick="bakimIptalEt('${b.id}')">
+                        ✕
+                    </button>
+                </div>
+            </td>
 
-        <button class="btn-danger"
-            onclick="bakimIptalEt('${b.id}')">
-            ✕ 
-        </button>
-
-    </div>
-</td>
-<td>${b.musteriNo ?? ""}</td>
-      <td>${b.adSoyad ?? ""}</td>
-      <td>${b.telefon ?? ""}</td>
-      <td>${tarihGoster(b.bakimTarihi)}</td>
-      <td><span class="${durumClass(b.durumKodu)}">${durumText(b.durumKodu)}</span></td>
-      <td>${b.aciklama ?? ""}</td>
-      <td>${b.islemNotu ?? ""}</td>
-    `;
+            <td>${b.musteriNo ?? ""}</td>
+            <td>${b.adSoyad ?? ""}</td>
+            <td>${b.telefon ?? ""}</td>
+            <td>${tarihGoster(b.bakimTarihi)}</td>
+            <td><span class="${durumClass(b.durumKodu)}">${durumText(b.durumKodu)}</span></td>
+            <td>${b.aciklama ?? ""}</td>
+            <td>${b.islemNotu ?? ""}</td>
+        `;
 
         tbody.appendChild(tr);
     });
-}
 
+    bakimPagerBas();
+}
+function bakimPagerBas() {
+    const pager = document.getElementById("bakimPager");
+    if (!pager) return;
+
+    const toplamSayfa = Math.ceil(bakimPagerListesi.length / bakimSayfaBoyutu);
+
+    if (toplamSayfa <= 1) {
+        pager.innerHTML = "";
+        return;
+    }
+
+    let html = "";
+
+    html += `
+        <button onclick="bakimSayfaDegistir(1)" ${bakimSayfaNo === 1 ? "disabled" : ""}>
+            <<
+        </button>
+    `;
+
+    html += `
+        <button onclick="bakimSayfaDegistir(${bakimSayfaNo - 1})" ${bakimSayfaNo === 1 ? "disabled" : ""}>
+            <
+        </button>
+    `;
+
+    let baslangic = Math.max(1, bakimSayfaNo - 5);
+    let bitis = Math.min(toplamSayfa, bakimSayfaNo + 5);
+
+    if (bakimSayfaNo <= 5) {
+        baslangic = 1;
+        bitis = Math.min(10, toplamSayfa);
+    }
+
+    if (bakimSayfaNo > toplamSayfa - 5) {
+        baslangic = Math.max(1, toplamSayfa - 9);
+        bitis = toplamSayfa;
+    }
+
+    if (baslangic > 1) {
+        html += `<span class="pager-dots">...</span>`;
+    }
+
+    for (let i = baslangic; i <= bitis; i++) {
+        html += `
+            <button
+                class="${bakimSayfaNo === i ? "active-page" : ""}"
+                onclick="bakimSayfaDegistir(${i})">
+                ${i}
+            </button>
+        `;
+    }
+
+    if (bitis < toplamSayfa) {
+        html += `<span class="pager-dots">...</span>`;
+    }
+
+    html += `
+        <button onclick="bakimSayfaDegistir(${bakimSayfaNo + 1})" ${bakimSayfaNo === toplamSayfa ? "disabled" : ""}>
+            >
+        </button>
+    `;
+
+    html += `
+        <button onclick="bakimSayfaDegistir(${toplamSayfa})" ${bakimSayfaNo === toplamSayfa ? "disabled" : ""}>
+            >>
+        </button>
+    `;
+
+    pager.innerHTML = html;
+}
+function bakimSayfaDegistir(yeniSayfa) {
+    const toplamSayfa = Math.ceil(bakimPagerListesi.length / bakimSayfaBoyutu);
+
+    if (yeniSayfa < 1 || yeniSayfa > toplamSayfa) return;
+
+    bakimSayfaNo = yeniSayfa;
+    bakimlariTabloyaBas(bakimPagerListesi);
+}
 function bakimTamamlaPopupAc(id) {
 
     const bakim = bakimlar.find(x => x.id == id);
@@ -296,6 +383,7 @@ function bakimAra() {
     const arama = document.getElementById("bakimArama").value.toLowerCase().trim();
 
     if (!arama) {
+        bakimSayfaNo = 1;
         bakimlariTabloyaBas(aktifBakimListesi);
         return;
     }
@@ -310,7 +398,7 @@ function bakimAra() {
             (b.islemNotu || "").toLowerCase().includes(arama)
         );
     });
-
+    bakimSayfaNo = 1;
     bakimlariTabloyaBas(filtreli);
 }
 function sirala(kolon) {
@@ -350,7 +438,7 @@ function sirala(kolon) {
 
         return 0;
     });
-
+    bakimSayfaNo = 1;
     bakimlariTabloyaBas(liste);
     baslikIconGuncelle(kolon);
 }
