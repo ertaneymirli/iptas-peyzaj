@@ -48,10 +48,19 @@ string projectId = builder.Configuration["Firebase:ProjectId"] ?? "iptaspeyzaj";
 
 // GOOGLE_APPLICATION_CREDENTIALS ortam değişkeni ile service account json dosyasını göstereceksin.
 // Örnek: setx GOOGLE_APPLICATION_CREDENTIALS "C:\\firebase\\serviceAccountKey.json"
-var firebaseKeyPath = Path.Combine(
-    builder.Environment.ContentRootPath,
-    "firebase-key.json"
-);
+string firebaseKeyPath;
+
+if (File.Exists("/etc/secrets/firebase-key.json"))
+{
+    firebaseKeyPath = "/etc/secrets/firebase-key.json";
+}
+else
+{
+    firebaseKeyPath = Path.Combine(
+        builder.Environment.ContentRootPath,
+        "firebase-key.json"
+    );
+}
 
 Environment.SetEnvironmentVariable(
     "GOOGLE_APPLICATION_CREDENTIALS",
