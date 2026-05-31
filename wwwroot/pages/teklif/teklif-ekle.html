@@ -1,0 +1,39 @@
+﻿<div id="teklifPopup" class="modal">
+    <div class="modal-box small-modal">
+        <div class="modal-header">
+            <h2 id="teklifPopupBaslik">Yeni Teklif</h2>
+            <button type="button" onclick="teklifPopupKapat()">✕</button>
+        </div>
+
+        <form id="teklifForm" class="teklif-form">
+            <input type="hidden" id="teklifId">
+
+            <label>Müşteri Seç</label>
+
+            <input type="text"
+                   id="musteriArama"
+                   placeholder="Müşteri ara..."
+                   oninput="musteriAra()">
+
+            <div id="musteriListe" class="musteri-dropdown"></div>
+
+            <input type="hidden" id="musteriNo">
+
+            <div class="teklif-musteri-bilgi">
+                <p><b>Ad Soyad:</b> <span id="musteriAdSoyad">-</span></p>
+                <p><b>Telefon:</b> <span id="musteriTelefon">-</span></p>
+            </div>
+
+            <label>Teklif Tarihi</label>
+            <input type="date" id="teklifTarihi" required>
+
+            <label>Tutar</label>
+            <input type="number" id="tutar" required>
+
+            <label>Açıklama</label>
+            <textarea id="aciklama"></textarea>
+
+            <button type="submit">Kaydet</button>
+        </form>
+    </div>
+</div>

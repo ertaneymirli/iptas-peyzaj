@@ -1,0 +1,40 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Müşteriler</h1>
+        <p>Müşteri listesi ve işlemleri</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="toolbar">
+        <button onclick="musterileriGetir()">Aktif Müşteriler</button>
+        <button onclick="pasifMusterileriGetir()">Pasif Müşteriler</button>
+        <button onclick="musteriEklePopupAc()">Ekle</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>İşlem</th>
+                <th>Müşteri No</th>
+                <th>Ad Soyad</th>
+                <th>Telefon</th>
+                <th>Şehir</th>
+                <th>Mekan Tipi</th>
+                <th>Bakım Tarihi</th>
+            </tr>
+        </thead>
+        <tbody id="musteriListe"></tbody>
+    </table>
+</section>
+
+<div id="musteriEklePopup" class="modal hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Yeni Müşteri Ekle</h2>
+            <button type="button" onclick="musteriEklePopupKapat()">✕</button>
+        </div>
+
+        <div id="musteriEkleIcerik"></div>
+    </div>
+</div>

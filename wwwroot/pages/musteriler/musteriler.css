@@ -1,0 +1,140 @@
+﻿.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+    .toolbar button {
+        padding: 11px 18px;
+        border: none;
+        border-radius: 9px;
+        background: #1f7a3f;
+        color: white;
+        cursor: pointer;
+    }
+
+    .toolbar .danger {
+        background: #b00020;
+    }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background: #174d2a;
+    color: white;
+    text-align: left;
+    padding: 13px;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr {
+    cursor: pointer;
+}
+
+    tbody tr:hover {
+        background: #f1f8f1;
+    }
+
+    tbody tr.selected {
+        background: #dff1df;
+        font-weight: bold;
+    }
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 250px; /* sidebar genişliği kadar it */
+    width: calc(100% - 250px); /* sağ alanı kapsa */
+    height: 100%;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 25px;
+}
+
+    .modal.hidden {
+        display: none;
+    }
+
+.modal-box {
+    background: white;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow: auto;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    background: #174d2a;
+    color: white;
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .modal-header button {
+        background: white;
+        color: #174d2a;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+.islem-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-edit,
+.btn-delete {
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-edit {
+    background: #1f7a3f;
+    color: white;
+}
+
+.btn-delete {
+    background: #b00020;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #155d2f;
+}
+
+.btn-delete:hover {
+    background: #7a0015;
+}
+.btn-active {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 9px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+    .btn-active:hover {
+        background: #1d4ed8;
+    }

@@ -1,0 +1,48 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Teklifler</h1>
+        <p>Teklif kayıtlarını görüntüle, ekle ve güncelle</p>
+    </div>
+
+    <button class="page-add-btn" onclick="teklifEklePopupAc()">
+        + Yeni Teklif
+    </button>
+</div>
+<section class="panel">
+    <div class="teklif-toolbar">
+        <div class="teklif-filters">
+            <button onclick="teklifleriTabloyaBas(teklifler)">Tümü</button>
+            <button onclick="teklifleriDurumaGoreGetir('B')">Bekleyen</button>
+            <button onclick="teklifleriDurumaGoreGetir('O')">Onaylanan</button>
+            <button onclick="teklifleriDurumaGoreGetir('R')">Reddedilen</button>
+            <button onclick="silinenTeklifleriGetir()">
+                Silinenler
+            </button>
+        </div>
+
+        <input type="text"
+               id="teklifArama"
+               class="teklif-search"
+               placeholder="Müşteri, telefon, açıklama ara..."
+               oninput="teklifAra()" />
+    </div>
+
+    <table class="teklif-table">
+     
+                <thead>
+                    <tr>
+                        <th>Müşteri No</th>
+                        <th>Ad Soyad</th>
+                        <th>Telefon</th>
+                        <th>Tarih</th>
+                        <th>Tutar</th>
+                        <th>Durum</th>
+                        <th>Açıklama</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="teklifListe"></tbody>
+            </table>
+        </section>
+
+        <div id="teklifPopupContainer"></div>

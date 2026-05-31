@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>İPTAŞ Peyzaj - Admin Panel</title>
+    <link rel="stylesheet" href="/admin.css">
+    <link rel="stylesheet" href="/pages/musteriler/musteriler.css">
+    <link rel="stylesheet" href="/pages/musteriler/musteri-ekle.css">
+    <link rel="stylesheet" href="/pages/bakim-takvimi/bakim-detay-goster.css">
+    <link rel="stylesheet" href="/pages/bakim-takvimi/bakim-takvimi.css">
+    <link rel="stylesheet" href="/pages/teklif/teklifler.css">
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h2>İPTAŞ<br><span>Peyzaj</span></h2>
+
+            <nav>
+                <a href="#" onclick="anaSayfaGoster()">Ana Sayfa</a>
+                <a href="#" onclick="sayfaYukle('pages/musteriler/musteriler.html')">Müşteriler</a>
+                <a href="#">Yapılacak İşler</a>
+                <a href="#" onclick="sayfaYukle('pages/bakim-takvimi/bakim-takvimi.html')">Bakım Takvimi</a>
+                <a href="#" onclick="sayfaYukle('pages/teklif/teklifler.html')">Teklifler</a>
+                <a href="#">Kullanıcılar</a>
+                <a href="#" onclick="cikis()">Çıkış Yap</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <div id="pageContent"></div>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+    <script src="pages/musteriler/musteriler.js"></script>
+    <script src="/pages/musteriler/musteri-ekle.js"></script>
+    <script src="/pages/bakim-takvimi/bakim-takvimi.js"></script>
+    <script src="/pages/bakim-takvimi/bakim-detay-goster.js"></script>
+    <script src="/pages/teklif/teklifler.js"></script>
+</body>
+</html>

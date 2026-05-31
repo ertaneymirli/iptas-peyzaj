@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "IptasPeyzajApi": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:61019;http://localhost:61020"
+    }
+  }
+}

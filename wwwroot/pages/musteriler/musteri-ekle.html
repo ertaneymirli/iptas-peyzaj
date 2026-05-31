@@ -1,0 +1,141 @@
+﻿<form id="musteriEkleForm" class="form-grid">
+
+    <div class="form-group">
+        <label for="musteriNo">Müşteri No</label>
+        <input type="number" id="musteriNo" placeholder="Otomatik verilecek" disabled />
+    </div>
+
+    <div class="form-group">
+        <label for="ad">Ad</label>
+        <input type="text" id="ad" placeholder="Ad giriniz" required />
+    </div>
+
+    <div class="form-group">
+        <label for="soyad">Soyad</label>
+        <input type="text" id="soyad" placeholder="Soyad giriniz" />
+    </div>
+
+    <div class="form-group">
+        <label for="tc">TC Kimlik No</label>
+        <input type="text"
+               id="tc"
+               maxlength="11"
+               inputmode="numeric"
+               pattern="[0-9]{11}"
+               placeholder="11 haneli TC"
+               oninput="this.value = this.value.replace(/[^0-9]/g, '')" />
+    </div>
+
+    <div class="form-group">
+        <label for="dogumTarihi">Doğum Tarihi</label>
+        <input type="date" id="dogumTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="cinsiyet">Cinsiyet</label>
+        <select id="cinsiyet">
+            <option value="">Seçiniz</option>
+            <option>Erkek</option>
+            <option>Kadın</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="telefon">Telefon</label>
+        <input type="text" id="telefon" placeholder="0555 555 55 55" />
+    </div>
+
+    <div class="form-group">
+        <label for="sehir">Şehir</label>
+        <input type="text" id="sehir" value="İzmir" />
+    </div>
+
+    <div class="form-group">
+        <label for="mekanTipi">Mekan Tipi</label>
+        <select id="mekanTipi">
+            <option value="">Seçiniz</option>
+            <option>Site</option>
+            <option>Villa</option>
+            <option>Bahçe</option>
+            <option>Apartman</option>
+            <option>İşyeri</option>
+            <option>Tarla</option>
+            <option>Diğer</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="mahalle">Mahalle</label>
+        <input type="text" id="mahalle" placeholder="Mahalle" />
+    </div>
+
+    <div class="form-group">
+        <label for="caddeSokak">Cadde / Sokak</label>
+        <input type="text" id="caddeSokak" placeholder="Cadde veya sokak" />
+    </div>
+
+    <div class="form-group small">
+        <label for="no">No</label>
+        <input type="text" id="no" placeholder="No" />
+    </div>
+
+    <div class="form-group small">
+        <label for="daire">Daire</label>
+        <input type="text" id="daire" placeholder="Daire" />
+    </div>
+
+    <div class="section-title">Sözleşme ve Bakım Bilgileri</div>
+
+    <div class="form-group">
+        <label for="sozlesmeTarihi">Sözleşme Tarihi</label>
+        <input type="date" id="sozlesmeTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="gorusmeTarihi">Görüşme Tarihi</label>
+        <input type="date" id="gorusmeTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="baslangicTarihi">Başlangıç Tarihi</label>
+        <input type="date" id="baslangicTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="bitisTarihi">Bitiş Tarihi</label>
+        <input type="date" id="bitisTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="bakimTarihi">İlk Bakım Tarihi</label>
+        <input type="date" id="bakimTarihi" />
+    </div>
+
+    <div class="form-group">
+        <label for="periyodikBakim">Periyodik Bakım</label>
+        <input type="number" id="periyodikBakim" placeholder="Örn: 5" />
+    </div>
+
+    <div class="form-group">
+        <label for="periyodikBakimTuru">Bakım Türü</label>
+        <select id="periyodikBakimTuru">
+            <option value="">Seçiniz</option>
+            <option>Gün</option>
+            <option>Hafta</option>
+            <option>Ay</option>
+            <option>Yıl</option>
+        </select>
+    </div>
+
+    <div class="form-group full">
+        <label for="aciklama">Açıklama</label>
+        <textarea id="aciklama" placeholder="Müşteri veya bakım hakkında not giriniz"></textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn-secondary" onclick="musteriEklePopupKapat()">Vazgeç</button>
+        <button type="submit" class="btn-primary">Kaydet</button>
+    </div>
+</form>
+
+<div id="musteriEkleMesaj"></div>

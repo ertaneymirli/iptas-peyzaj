@@ -1,0 +1,326 @@
+﻿.bakim-filters,
+.bakim-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+    .bakim-filters button,
+    .bakim-actions button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 9px;
+        background: #1f7a3f;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .bakim-actions .danger {
+        background: #b00020;
+    }
+
+    .bakim-actions .warning {
+        background: #d97706;
+    }
+
+.bakim-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+    .bakim-table th {
+        background: #174d2a;
+        color: white;
+        text-align: left;
+        padding: 12px;
+    }
+
+    .bakim-table td {
+        padding: 11px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .bakim-table tbody tr {
+        cursor: pointer;
+    }
+
+        .bakim-table tbody tr:hover {
+            background: #f1f8f1;
+        }
+
+        .bakim-table tbody tr.selected {
+            background: #dff1df;
+            font-weight: bold;
+        }
+
+    /* İŞLEM KOLONU */
+    .bakim-table td:last-child {
+        min-width: 340px;
+    }
+
+    /* ACTION BUTTONS */
+    .bakim-table .action-buttons {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+        align-items: center;
+    }
+
+        .bakim-table .action-buttons button {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            min-width: 70px;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+            .bakim-table .action-buttons button:hover {
+                transform: translateY(-1px);
+                opacity: 0.92;
+            }
+
+    .bakim-table .btn-view {
+        background: #2563eb;
+        color: white;
+    }
+
+    .bakim-table .btn-success {
+        background: #16a34a;
+        color: white;
+    }
+
+    .bakim-table .btn-warning {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .bakim-table .btn-danger {
+        background: #dc2626;
+        color: white;
+    }
+
+/* BADGE */
+.badge {
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.badge-wait {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* MODAL */
+.small-modal {
+    max-width: 450px;
+}
+
+.ertele-form,
+.tamamla-form {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+    .ertele-form label,
+    .tamamla-form label {
+        font-size: 13px;
+        font-weight: bold;
+        color: #174d2a;
+    }
+
+    .ertele-form input,
+    .ertele-form textarea,
+    .tamamla-form input,
+    .tamamla-form textarea {
+        padding: 11px;
+        border: 1px solid #ccc;
+        border-radius: 9px;
+    }
+
+    .ertele-form textarea,
+    .tamamla-form textarea {
+        min-height: 90px;
+    }
+
+    .ertele-form button,
+    .tamamla-form button {
+        margin-top: 8px;
+        padding: 12px;
+        background: #1f7a3f;
+        color: white;
+        border: none;
+        border-radius: 9px;
+        cursor: pointer;
+    }
+
+#tamamlaMesaj {
+    padding: 0 22px 18px;
+    font-weight: bold;
+    color: #174d2a;
+}
+
+/* TOOLBAR */
+.bakim-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.bakim-search {
+    min-width: 260px;
+    padding: 10px 12px;
+    border: 1px solid #cfd8cf;
+    border-radius: 9px;
+    outline: none;
+}
+
+    .bakim-search:focus {
+        border-color: #1f7a3f;
+        box-shadow: 0 0 0 2px rgba(31, 122, 63, 0.12);
+    }
+
+/* TABLE SORT */
+th {
+    cursor: pointer;
+    user-select: none;
+}
+
+    th:hover {
+        background: #1f7a3f;
+    }
+
+/* PERSONEL */
+.personel-secim {
+    display: flex;
+    gap: 8px;
+}
+
+    .personel-secim select {
+        flex: 1;
+    }
+
+    .personel-secim button {
+        width: 90px;
+    }
+
+.personel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+    .personel-table th {
+        background: #174d2a;
+        color: white;
+        padding: 8px;
+        text-align: left;
+    }
+
+    .personel-table td {
+        padding: 8px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .personel-table .btn-delete {
+        background: #b00020;
+        color: white;
+        border: none;
+        padding: 5px 9px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+.personel-detay {
+    border-top: 1px solid #d9ead9;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.resim-yok {
+    color: #777;
+    font-style: italic;
+}
+
+/* DETAY */
+.btn-detail {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 9px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.bakim-detay-content {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.detay-card {
+    border: 1px solid #d9ead9;
+    border-radius: 12px;
+    padding: 14px;
+    background: #f8fbf8;
+}
+
+.bakim-resim {
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+}
+
+/* MOBILE */
+@media (max-width: 800px) {
+
+    .bakim-table {
+        font-size: 13px;
+    }
+
+        .bakim-table th,
+        .bakim-table td {
+            padding: 8px;
+        }
+
+    .bakim-detay-content {
+        grid-template-columns: 1fr;
+    }
+
+    .bakim-table .action-buttons {
+        flex-wrap: wrap;
+    }
+}

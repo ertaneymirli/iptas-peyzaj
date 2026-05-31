@@ -1,0 +1,116 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Bakım Takvimi</h1>
+        <p>Planlanan, tamamlanan, iptal edilen ve ertelenen bakım kayıtları</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="bakim-toolbar">
+        <div class="bakim-filters">
+            <button onclick="bakimlariGetir()">Tümü</button>
+            <button onclick="bakimlariDurumaGoreGetir('B')">Bekleyen</button>
+            <button onclick="bakimlariDurumaGoreGetir('T')">Tamamlanan</button>
+            <button onclick="bakimlariDurumaGoreGetir('I')">İptal</button>
+            <button onclick="bakimlariDurumaGoreGetir('E')">Ertelenen</button>
+        </div>
+
+        <input type="text"
+               id="bakimArama"
+               class="bakim-search"
+               placeholder="Müşteri, telefon, durum ara..."
+               oninput="bakimAra()" />
+    </div>
+
+    <table class="bakim-table">
+        <thead>
+            <tr>
+                <th>Detay</th>
+                <th onclick="sirala('musteriNo')" data-field="musteriNo">Müşteri No ⬍</th>
+                <th onclick="sirala('adSoyad')" data-field="adSoyad">Ad Soyad ⬍</th>
+                <th onclick="sirala('telefon')" data-field="telefon">Telefon ⬍</th>
+                <th onclick="sirala('bakimTarihi')" data-field="bakimTarihi">Bakım Tarihi ⬍</th>
+                <th onclick="sirala('durumKodu')" data-field="durumKodu">Durum ⬍</th>
+                <th onclick="sirala('aciklama')" data-field="aciklama">Açıklama ⬍</th>
+                <th onclick="sirala('islemNotu')" data-field="islemNotu">İşlem Notu ⬍</th>
+            </tr>
+        </thead>
+        <tbody id="bakimListe"></tbody>
+    </table>
+</section>
+
+
+
+<div id="ertelePopup" class="modal hidden">
+    <div class="modal-box small-modal">
+        <div class="modal-header">
+            <h2>Bakım Ertele</h2>
+            <button type="button" onclick="bakimErtelePopupKapat()">✕</button>
+        </div>
+
+        <div class="ertele-form">
+            <label>Yeni Bakım Tarihi</label>
+            <input type="date" id="yeniBakimTarihi">
+
+            <label>İşlem Notu</label>
+            <textarea id="erteleNotu" placeholder="Erteleme nedeni"></textarea>
+
+            <button onclick="bakimErtele()">Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<div id="tamamlaPopup" class="modal hidden">
+    <div class="modal-box small-modal">
+        <div class="modal-header">
+            <h2>Bakımı Tamamla</h2>
+            <button type="button" onclick="tamamlaPopupKapat()">✕</button>
+        </div>
+
+        <form id="tamamlaForm" class="tamamla-form">
+            <label>Personel Seç</label>
+
+            <div class="personel-secim">
+                <select id="personelSelect">
+                    <option value="">Personel seçiniz</option>
+                </select>
+
+                <button type="button" onclick="personelEkle()">Ekle</button>
+            </div>
+
+            <table class="personel-table">
+                <thead>
+                    <tr>
+                        <th>Personel ID</th>
+                        <th>Personel Adı</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="seciliPersonelListe"></tbody>
+            </table>
+
+            <label>Öncesi Resim</label>
+            <input type="file" id="oncesiResim" accept="image/*">
+
+            <label>Sonrası Resim</label>
+            <input type="file" id="sonrasiResim" accept="image/*">
+
+            <label>İşlem Notu</label>
+            <textarea id="tamamlaNotu" placeholder="Yapılan işlemi yazınız"></textarea>
+
+            <button type="submit">Kaydet</button>
+        </form>
+
+        <div id="tamamlaMesaj"></div>
+    </div>
+</div>
+<div id="bakimDetayPopup" class="modal hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Bakım Detayları</h2>
+            <button type="button" onclick="bakimDetayKapat()">✕</button>
+        </div>
+
+        <div id="bakimDetayIcerik"></div>
+    </div>
+</div>
