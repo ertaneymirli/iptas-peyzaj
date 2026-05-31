@@ -20,7 +20,6 @@
 		<Folder Include="Backend\Teklifler\Models\DTO\" />
 		<Folder Include="Backend\musteriler\Models\DTO\" />
 		<Folder Include="Backend\Personeller\Models\DTO\" />
-		<Folder Include="wwwroot\pages\personeller\" />
 	</ItemGroup>
 
 </Project>

@@ -18,4 +18,16 @@ public class Personel
     public string Soyad { get; set; } = string.Empty;
 
     public string AdSoyad => $"{Ad} {Soyad}";
+
+    [FirestoreProperty]
+    public string Telefon { get; set; } = string.Empty;
+
+    [FirestoreProperty]
+    public string Gorev { get; set; } = string.Empty;
+
+    [FirestoreProperty]
+    public string DurumKodu { get; set; } = "A";
+
+    [FirestoreProperty]
+    public DateTime KayitTarihi { get; set; }
 }

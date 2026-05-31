@@ -1,0 +1,56 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Personeller</h1>
+        <p>Personel kayıtlarını yönet</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="personel-toolbar">
+        <div class="personel-filters">
+            <button onclick="personelSayfasiGetir()">Aktifler</button>
+            <button onclick="personelSayfasiDurumaGoreGetir('P')">Pasifler</button>
+            <button onclick="personelPopupAc()">+ Yeni Personel</button>
+        </div>
+
+        <input type="text"
+               id="personelArama"
+               class="personel-search"
+               placeholder="Ad, telefon, görev ara..."
+               oninput="personelAra()" />
+    </div>
+
+    <table class="personel-main-table">
+        <thead>
+            <tr>
+                <th>İşlem</th>
+                <th>Id</th>
+                <th>Personel No</th>
+                <th>Ad Soyad</th>
+                <th>Telefon</th>
+                <th>Görev</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+        <tbody id="personelListe"></tbody>
+    </table>
+
+    <div id="personelPager" class="pager"></div>
+</section>
+
+<div id="personelPopup" class="modal hidden">
+    <div class="modal-box small-modal">
+
+        <div class="modal-header">
+            <h2 id="personelPopupBaslik">Personel</h2>
+
+            <button type="button"
+                    onclick="personelPopupKapat()">
+                ✕
+            </button>
+        </div>
+
+        <div id="personelPopupIcerik"></div>
+
+    </div>
+</div>

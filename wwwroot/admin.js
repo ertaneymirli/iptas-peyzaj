@@ -84,6 +84,7 @@ async function anaSayfaSayilariGetir() {
     const musteriResponse = await apiFetch("/api/Musteriler");
     const bakimResponse = await apiFetch("/api/BakimPlanlari");
 
+
     anaSayfaMusteriler = musteriResponse.ok ? await musteriResponse.json() : [];
     anaSayfaBakimlar = bakimResponse.ok ? await bakimResponse.json() : [];
 
@@ -179,6 +180,9 @@ async function sayfaYukle(sayfa) {
     }
     if (sayfa.includes("teklif/teklifler.html")) {
         teklifleriGetir();
+    }
+    if (sayfa.includes("personeller/personeller.html")) {
+        personelSayfasiGetir();
     }
 }
 

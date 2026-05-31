@@ -1,0 +1,88 @@
+﻿.personel-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.personel-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    .personel-filters button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 9px;
+        background: #1f7a3f;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+.personel-search {
+    min-width: 260px;
+    padding: 10px 12px;
+    border: 1px solid #cfd8cf;
+    border-radius: 9px;
+    outline: none;
+}
+
+.personel-main-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .personel-main-table th {
+        background: #174d2a;
+        color: white;
+        text-align: left;
+        padding: 12px;
+    }
+
+    .personel-main-table td {
+        padding: 11px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .personel-main-table tbody tr:hover {
+        background: #f1f8f1;
+    }
+
+.personel-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.personel-form {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+    .personel-form label {
+        font-size: 13px;
+        font-weight: bold;
+        color: #174d2a;
+    }
+
+    .personel-form input {
+        padding: 11px;
+        border: 1px solid #ccc;
+        border-radius: 9px;
+    }
+
+    .personel-form button {
+        margin-top: 8px;
+        padding: 12px;
+        background: #1f7a3f;
+        color: white;
+        border: none;
+        border-radius: 9px;
+        cursor: pointer;
+    }
