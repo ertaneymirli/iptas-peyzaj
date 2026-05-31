@@ -77,7 +77,7 @@ public class KullanicilarController : ControllerBase
             KullaniciAdi = dto.KullaniciAdi,
             Ad = dto.Ad,
             Soyad = dto.Soyad,
-            DogumTarihi = dto.DogumTarihi,
+            DogumTarihi = UtcYap(dto.DogumTarihi),
             Tc = dto.Tc,
             TelefonNo = dto.TelefonNo,
             CepTelefonNo = dto.CepTelefonNo,
@@ -110,14 +110,13 @@ public class KullanicilarController : ControllerBase
         kullanici.KullaniciAdi = dto.KullaniciAdi;
         kullanici.Ad = dto.Ad;
         kullanici.Soyad = dto.Soyad;
-        kullanici.DogumTarihi = dto.DogumTarihi;
+        kullanici.DogumTarihi = UtcYap(dto.DogumTarihi);
         kullanici.Tc = dto.Tc;
         kullanici.TelefonNo = dto.TelefonNo;
         kullanici.CepTelefonNo = dto.CepTelefonNo;
         kullanici.Adres = dto.Adres;
         kullanici.Mail = dto.Mail;
         kullanici.Rol = dto.Rol;
-        kullanici.AktifMi = dto.AktifMi;
 
         if (!string.IsNullOrWhiteSpace(dto.Sifre))
         {
@@ -132,8 +131,9 @@ public class KullanicilarController : ControllerBase
         return Ok(kullanici);
     }
    
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+  
+    [HttpPut("{id}/durum")]
+    public async Task<IActionResult> DurumGuncelle(string id, [FromBody] KullaniciDurumDto dto)
     {
         DocumentReference docRef = _db.Collection(CollectionName).Document(id);
         DocumentSnapshot doc = await docRef.GetSnapshotAsync();
@@ -141,9 +141,12 @@ public class KullanicilarController : ControllerBase
         if (!doc.Exists)
             return NotFound("Kullanıcı bulunamadı.");
 
-        await docRef.DeleteAsync();
+        await docRef.UpdateAsync(new Dictionary<string, object>
+    {
+        { "AktifMi", dto.AktifMi }
+    });
 
-        return Ok("Kullanıcı silindi.");
+        return Ok("Kullanıcı durumu güncellendi.");
     }
     [AllowAnonymous]
     [HttpPost("login")]
@@ -201,4 +204,20 @@ public class KullanicilarController : ControllerBase
         byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(sifre));
         return Convert.ToHexString(bytes);
     }
+    private static DateTime? UtcYap(DateTime? tarih)
+    {
+        if (tarih == null)
+            return null;
+
+        if (tarih.Value.Kind == DateTimeKind.Utc)
+            return tarih;
+
+        return DateTime.SpecifyKind(tarih.Value, DateTimeKind.Utc);
+    }
+
+}
+
+public class KullaniciDurumDto
+{
+    public bool AktifMi { get; set; }
 }

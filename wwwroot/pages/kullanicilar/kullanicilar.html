@@ -1,0 +1,50 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Kullanıcılar</h1>
+        <p>Sistem kullanıcılarını yönet</p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="kullanici-toolbar">
+        <div class="kullanici-filters">
+            <button onclick="kullaniciSayfasiGetir()">Aktifler</button>
+            <button onclick="kullaniciSayfasiDurumaGoreGetir(false)">Pasifler</button>
+            <button onclick="kullaniciPopupAc()">+ Yeni Kullanıcı</button>
+        </div>
+
+        <input type="text"
+               id="kullaniciArama"
+               class="kullanici-search"
+               placeholder="Ad, kullanıcı adı, telefon ara..."
+               oninput="kullaniciAra()" />
+    </div>
+
+    <table class="kullanici-table">
+        <thead>
+            <tr>
+                <th>İşlem</th>
+                <th>Kullanıcı Adı</th>
+                <th>Ad Soyad</th>
+                <th>Telefon</th>
+                <th>Mail</th>
+                <th>Rol</th>
+                <th>Durum</th>
+            </tr>
+        </thead>
+        <tbody id="kullaniciListe"></tbody>
+    </table>
+
+    <div id="kullaniciPager" class="pager"></div>
+</section>
+
+<div id="kullaniciPopup" class="modal hidden">
+    <div class="modal-box small-modal">
+        <div class="modal-header">
+            <h2 id="kullaniciPopupBaslik">Kullanıcı</h2>
+            <button type="button" onclick="kullaniciPopupKapat()">✕</button>
+        </div>
+
+        <div id="kullaniciPopupIcerik"></div>
+    </div>
+</div>

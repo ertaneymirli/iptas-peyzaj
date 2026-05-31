@@ -184,6 +184,9 @@ async function sayfaYukle(sayfa) {
     if (sayfa.includes("personeller/personeller.html")) {
         personelSayfasiGetir();
     }
+    if (sayfa.includes("kullanicilar/kullanicilar.html")) {
+        kullaniciSayfasiGetir();
+    }
 }
 
 function cikis() {

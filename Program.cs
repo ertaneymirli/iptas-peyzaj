@@ -1,11 +1,12 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Google.Cloud.Firestore;
 using IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
+using IptasPeyzajApi.Backend.Kullanicilar.Helpers;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
 using IptasPeyzajApi.Backend.Personeller.Helpers;
 using IptasPeyzajApi.Backend.Teklifler.Helpers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 
@@ -14,6 +15,7 @@ builder.Services.AddScoped<MusteriHelper>();
 builder.Services.AddScoped<BakimPlaniHelper>();
 builder.Services.AddScoped<PersonelHelper>();
 builder.Services.AddScoped<TeklifHelper>();
+builder.Services.AddScoped<KullaniciHelper>();
 builder.Services.AddControllers();
 var jwtKey = "iptas-peyzaj-cok-gizli-anahtar-2026";
 

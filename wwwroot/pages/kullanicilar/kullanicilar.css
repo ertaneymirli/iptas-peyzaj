@@ -1,0 +1,53 @@
+﻿.kullanici-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.kullanici-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+    .kullanici-filters button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 9px;
+        background: #1f7a3f;
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+.kullanici-search {
+    min-width: 280px;
+    padding: 10px 12px;
+    border: 1px solid #cfd8cf;
+    border-radius: 9px;
+}
+
+.kullanici-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .kullanici-table th {
+        background: #174d2a;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    .kullanici-table td {
+        padding: 11px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+.kullanici-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
