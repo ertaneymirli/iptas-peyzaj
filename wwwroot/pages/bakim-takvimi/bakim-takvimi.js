@@ -32,70 +32,166 @@ async function bakimlariDurumaGoreGetir(durumKodu) {
         await bakimlariGetir();
     }
 
-    const filtreliListe = bakimlar.filter(x => x.durumKodu === durumKodu);
+    seciliBakimDurumu = durumKodu;
+
+    const filtreliListe = bakimlar.filter(function (bakim) {
+        return bakim.durumKodu === durumKodu;
+    });
+
+    aktifBakimListesi = filtreliListe;
     bakimSayfaNo = 1;
     bakimlariTabloyaBas(filtreliListe);
 }
+var seciliBakimDurumu = null;
+
+function kullaniciRolunuGetir() {
+    const dogrudanRol = localStorage.getItem("rol");
+
+    if (dogrudanRol !== null && dogrudanRol !== "") {
+        return Number(dogrudanRol);
+    }
+
+    const kullaniciJson = localStorage.getItem("kullanici");
+
+    if (!kullaniciJson) {
+        return null;
+    }
+
+    const kullanici = JSON.parse(kullaniciJson);
+    return Number(kullanici.rol ?? kullanici.Rol);
+}
+
+function yoneticiMi() {
+    try {
+        return kullaniciRolunuGetir() === 1;
+    } catch (e) {
+        console.error("Kullanıcı rolü okunamadı:", e);
+        return false;
+    }
+}
+
+function yoneticiYetkiKontrolu() {
+    if (yoneticiMi()) {
+        return true;
+    }
+
+    alert("Bu işlem için yönetici yetkiniz bulunmuyor.");
+    return false;
+}
+function bakimFiltresiSec(durumKodu, buton) {
+    seciliBakimDurumu = durumKodu;
+
+    document
+        .querySelectorAll(".bakim-filters button")
+        .forEach(function (item) {
+            item.classList.remove("active");
+        });
+
+    buton.classList.add("active");
+
+    // Sekme değiştirilince aramayı temizlemek istersen:
+    document.getElementById("bakimArama").value = "";
+
+    if (durumKodu) {
+        bakimlariDurumaGoreGetir(durumKodu);
+    } else {
+        bakimlariGetir();
+    }
+}
 
 function bakimlariTabloyaBas(liste) {
-
     bakimPagerListesi = liste;
 
     const tbody = document.getElementById("bakimListe");
-    if (!tbody) return;
+    const templateElement =
+        document.getElementById("bakimSatirTemplate");
+
+    if (!tbody || !templateElement) {
+        return;
+    }
 
     tbody.innerHTML = "";
     seciliBakim = null;
 
-    const baslangic = (bakimSayfaNo - 1) * bakimSayfaBoyutu;
-    const bitis = baslangic + bakimSayfaBoyutu;
+    const baslangic =
+        (bakimSayfaNo - 1) * bakimSayfaBoyutu;
 
-    const sayfaListesi = liste.slice(baslangic, bitis);
+    const bitis =
+        baslangic + bakimSayfaBoyutu;
 
-    sayfaListesi.forEach(b => {
-        const tr = document.createElement("tr");
+    const sayfaListesi =
+        liste.slice(baslangic, bitis);
 
-        tr.onclick = function () {
-            document.querySelectorAll("#bakimListe tr").forEach(x => x.classList.remove("selected"));
-            tr.classList.add("selected");
-            seciliBakim = b;
-        };
+    sayfaListesi.forEach(function (bakim) {
+        const parca =
+            templateElement.content.cloneNode(true);
 
-        tr.innerHTML = `
-            <td>
-                <div class="action-buttons">
-                    <button class="btn-view" onclick="bakimDetayGoster(event, '${b.id}')">🔍</button>
+        const satir =
+            parca.querySelector("tr");
 
-                    <button class="btn-success"
-                        onclick="bakimTamamlaPopupAc('${b.id}')">
-                        ✓
-                    </button>
+        satir.dataset.id = bakim.id;
 
-                    <button class="btn-warning"
-                        onclick="bakimErtelePopupAc('${b.id}')">
-                        ⏳
-                    </button>
+        satir
+            .querySelectorAll("[data-bind-text]")
+            .forEach(function (alan) {
+                const alanAdi =
+                    alan.dataset.bindText;
 
-                    <button class="btn-danger"
-                        onclick="bakimIptalEt('${b.id}')">
-                        ✕
-                    </button>
-                </div>
-            </td>
+                const formatterAdi =
+                    alan.dataset.formatter;
 
-            <td>${b.musteriNo ?? ""}</td>
-            <td>${b.adSoyad ?? ""}</td>
-            <td>${b.telefon ?? ""}</td>
-            <td>${tarihGoster(b.bakimTarihi)}</td>
-            <td><span class="${durumClass(b.durumKodu)}">${durumText(b.durumKodu)}</span></td>
-            <td>${b.aciklama ?? ""}</td>
-            <td>${b.islemNotu ?? ""}</td>
-        `;
+                let deger =
+                    bakim[alanAdi];
 
-        tbody.appendChild(tr);
+                if (
+                    formatterAdi &&
+                    typeof window[formatterAdi] === "function"
+                ) {
+                    deger =
+                        window[formatterAdi](deger);
+                }
+
+                alan.textContent =
+                    deger ?? "";
+
+                const classFormatterAdi =
+                    alan.dataset.classFormatter;
+
+                if (
+                    classFormatterAdi &&
+                    typeof window[classFormatterAdi] === "function"
+                ) {
+                    alan.className =
+                        window[classFormatterAdi](
+                            bakim[alanAdi]
+                        );
+                }
+            });
+
+        satir
+            .querySelectorAll(".yonetici-islem")
+            .forEach(function (buton) {
+                buton.hidden = !yoneticiMi();
+            });
+
+        tbody.appendChild(parca);
     });
 
     bakimPagerBas();
+}
+
+function bakimSatirSec(satir, id) {
+    document
+        .querySelectorAll("#bakimListe tr")
+        .forEach(function (item) {
+            item.classList.remove("selected");
+        });
+
+    satir.classList.add("selected");
+
+    seciliBakim = bakimlar.find(function (bakim) {
+        return String(bakim.id) === String(id);
+    }) ?? null;
 }
 function bakimPagerBas() {
     const pager = document.getElementById("bakimPager");
@@ -176,6 +272,7 @@ function bakimSayfaDegistir(yeniSayfa) {
     bakimlariTabloyaBas(bakimPagerListesi);
 }
 function bakimTamamlaPopupAc(id) {
+    if (!yoneticiYetkiKontrolu()) return;
 
     const bakim = bakimlar.find(x => x.id == id);
 
@@ -218,6 +315,8 @@ function tamamlaPopupKapat() {
 document.addEventListener("submit", async function (e) {
     if (e.target && e.target.id === "tamamlaForm") {
         e.preventDefault();
+
+        if (!yoneticiYetkiKontrolu()) return;
 
         const formData = new FormData();
 
@@ -271,6 +370,7 @@ document.addEventListener("submit", async function (e) {
 });
 
 async function bakimIptalEt(id) {
+    if (!yoneticiYetkiKontrolu()) return;
 
     const bakim = bakimlar.find(x => x.id == id);
 
@@ -306,6 +406,7 @@ async function bakimIptalEt(id) {
 }
 
 function bakimErtelePopupAc(id) {
+    if (!yoneticiYetkiKontrolu()) return;
 
     const bakim = bakimlar.find(x => x.id == id);
 
@@ -334,6 +435,8 @@ function bakimErtelePopupKapat() {
 }
 
 async function bakimErtele() {
+    if (!yoneticiYetkiKontrolu()) return;
+
     const yeniTarih = document.getElementById("yeniBakimTarihi").value;
     const not = document.getElementById("erteleNotu").value;
 
@@ -380,26 +483,54 @@ function tarihGoster(value) {
     return new Date(value).toLocaleDateString("tr-TR");
 }
 function bakimAra() {
-    const arama = document.getElementById("bakimArama").value.toLowerCase().trim();
+    const aramaMetni = document
+        .getElementById("bakimArama")
+        .value
+        .trim()
+        .toLocaleLowerCase("tr-TR");
 
-    if (!arama) {
-        bakimSayfaNo = 1;
-        bakimlariTabloyaBas(aktifBakimListesi);
-        return;
+    let kaynakListe = bakimlar;
+
+    // Önce seçili sekmeye göre filtrele
+    if (seciliBakimDurumu) {
+        kaynakListe = kaynakListe.filter(function (bakim) {
+            return bakim.durumKodu === seciliBakimDurumu;
+        });
     }
 
-    const filtreli = aktifBakimListesi.filter(b => {
+    // Sonra arama metnine göre filtrele
+    const filtrelenmisListe = kaynakListe.filter(function (bakim) {
         return (
-            (b.musteriNo?.toString() || "").includes(arama) ||
-            (b.adSoyad || "").toLowerCase().includes(arama) ||
-            (b.telefon || "").toLowerCase().includes(arama) ||
-            (durumText(b.durumKodu) || "").toLowerCase().includes(arama) ||
-            (b.aciklama || "").toLowerCase().includes(arama) ||
-            (b.islemNotu || "").toLowerCase().includes(arama)
+            !aramaMetni ||
+            String(bakim.musteriNo || "")
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni) ||
+
+            String(bakim.adSoyad || "")
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni) ||
+
+            String(bakim.telefon || "")
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni) ||
+
+            durumText(bakim.durumKodu)
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni) ||
+
+            String(bakim.aciklama || "")
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni) ||
+
+            String(bakim.islemNotu || "")
+                .toLocaleLowerCase("tr-TR")
+                .includes(aramaMetni)
         );
     });
+
+    aktifBakimListesi = filtrelenmisListe;
     bakimSayfaNo = 1;
-    bakimlariTabloyaBas(filtreli);
+    bakimlariTabloyaBas(filtrelenmisListe);
 }
 function sirala(kolon) {
 
@@ -576,9 +707,9 @@ async function bakimDetayGoster(e, bakimId) {
                         <p><b>Resim Tipi:</b> ${d.resimTip ?? "Resim yok"}</p>
 
                 ${d.resimUrl && d.resimUrl !== ""
-                        ? `<img src="${d.resimUrl}" class="bakim-resim" />`
-                        : `<p class="resim-yok">Fotoğraf eklenmemiş.</p>`
-}
+                ? `<img src="${d.resimUrl}" class="bakim-resim" />`
+                : `<p class="resim-yok">Fotoğraf eklenmemiş.</p>`
+            }
                     </div>
                 `).join("")}
             </div>

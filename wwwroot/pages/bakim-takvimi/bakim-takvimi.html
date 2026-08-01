@@ -8,11 +8,11 @@
 <section class="panel">
     <div class="bakim-toolbar">
         <div class="bakim-filters">
-            <button onclick="bakimlariGetir()">Tümü</button>
-            <button onclick="bakimlariDurumaGoreGetir('B')">Bekleyen</button>
-            <button onclick="bakimlariDurumaGoreGetir('T')">Tamamlanan</button>
-            <button onclick="bakimlariDurumaGoreGetir('I')">İptal</button>
-            <button onclick="bakimlariDurumaGoreGetir('E')">Ertelenen</button>
+            <button type="button" onclick="bakimFiltresiSec(null, this)">Tümü</button>
+            <button type="button" onclick="bakimFiltresiSec('B', this)">Bekleyen</button>
+            <button type="button" onclick="bakimFiltresiSec('T', this)">Tamamlanan</button>
+            <button type="button" onclick="bakimFiltresiSec('I', this)">İptal</button>
+            <button type="button" onclick="bakimFiltresiSec('E', this)">Ertelenen</button>
         </div>
 
         <input type="text"
@@ -38,9 +38,88 @@
         <tbody id="bakimListe"></tbody>
     </table>
 </section>
+
 <div id="bakimPager" class="pager"></div>
 
+<!-- Bakım satırının bütün HTML'i burada tutulur. -->
+<!-- Kendo gerektirmeyen bakım satırı şablonu -->
+<template id="bakimSatirTemplate">
+    <tr onclick="bakimSatirSec(this)">
+        <td>
+            <div class="action-buttons">
+                <button type="button"
+                        class="btn-view"
+                        title="Görüntüle"
+                        onclick="
+                            event.stopPropagation();
+                            bakimDetayGoster(
+                                event,
+                                this.closest('tr').dataset.id
+                            );
+                        ">
+                    🔍
+                </button>
 
+                <button type="button"
+                        class="btn-success yonetici-islem"
+                        title="Tamamla"
+                        hidden
+                        onclick="
+                            event.stopPropagation();
+                            bakimTamamlaPopupAc(
+                                this.closest('tr').dataset.id
+                            );
+                        ">
+                    ✓
+                </button>
+
+                <button type="button"
+                        class="btn-warning yonetici-islem"
+                        title="Ertele"
+                        hidden
+                        onclick="
+                            event.stopPropagation();
+                            bakimErtelePopupAc(
+                                this.closest('tr').dataset.id
+                            );
+                        ">
+                    ⏳
+                </button>
+
+                <button type="button"
+                        class="btn-danger yonetici-islem"
+                        title="İptal et"
+                        hidden
+                        onclick="
+                            event.stopPropagation();
+                            bakimIptalEt(
+                                this.closest('tr').dataset.id
+                            );
+                        ">
+                    ✕
+                </button>
+            </div>
+        </td>
+
+        <td data-bind-text="musteriNo"></td>
+        <td data-bind-text="adSoyad"></td>
+        <td data-bind-text="telefon"></td>
+
+        <td data-bind-text="bakimTarihi"
+            data-formatter="tarihGoster">
+        </td>
+
+        <td>
+            <span data-bind-text="durumKodu"
+                  data-formatter="durumText"
+                  data-class-formatter="durumClass">
+            </span>
+        </td>
+
+        <td data-bind-text="aciklama"></td>
+        <td data-bind-text="islemNotu"></td>
+    </tr>
+</template>
 <div id="ertelePopup" class="modal hidden">
     <div class="modal-box small-modal">
         <div class="modal-header">
@@ -55,7 +134,7 @@
             <label>İşlem Notu</label>
             <textarea id="erteleNotu" placeholder="Erteleme nedeni"></textarea>
 
-            <button onclick="bakimErtele()">Kaydet</button>
+            <button type="button" onclick="bakimErtele()">Kaydet</button>
         </div>
     </div>
 </div>
@@ -104,6 +183,7 @@
         <div id="tamamlaMesaj"></div>
     </div>
 </div>
+
 <div id="bakimDetayPopup" class="modal hidden">
     <div class="modal-box">
         <div class="modal-header">
