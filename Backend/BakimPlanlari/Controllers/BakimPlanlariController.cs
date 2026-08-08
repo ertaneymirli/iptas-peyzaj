@@ -401,6 +401,53 @@ public class BakimPlanlariController : ControllerBase
 
         return Ok(detaylar);
     }
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> Dashboard()
+    {
+        if (
+            !AdminMi() &&
+            string.IsNullOrWhiteSpace(KullaniciIdGetir())
+        )
+        {
+            return Unauthorized(
+                "Token içerisinde kullanıcı ID bulunamadı."
+            );
+        }
+
+        var musteriler =
+            await _musteriHelper.TumMusterileriGetir();
+
+        var bakimlar =
+            await _helper.TumBakimlariGetir();
+
+        if (!AdminMi())
+        {
+            HashSet<string> yetkiliMusteriIdleri =
+                await YetkiliMusteriIdleriniGetir();
+
+            musteriler = musteriler
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(x.Id) &&
+                    yetkiliMusteriIdleri.Contains(x.Id)
+                )
+                .ToList();
+
+            bakimlar = bakimlar
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(x.MusteriId) &&
+                    yetkiliMusteriIdleri.Contains(x.MusteriId)
+                )
+                .ToList();
+        }
+
+        await MusteriBilgileriniDoldur(bakimlar);
+
+        return Ok(new
+        {
+            musteriler,
+            bakimlar
+        });
+    }
 }
 
 public class BakimDurumDto

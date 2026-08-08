@@ -50,6 +50,44 @@
 
         <main class="content">
             <div id="pageContent"></div>
+
+            <template id="anaSayfaTemplate">
+                <div class="page-header">
+                    <h2>Ana Sayfa</h2>
+                    <p id="hosGeldinKullanici"></p>
+                </div>
+
+                <section class="cards">
+                    <div class="card" onclick="dashboardListeAc('musteri')">
+                        <h3>Toplam Müşteri</h3>
+                        <strong id="toplamMusteri">0</strong>
+                    </div>
+
+                    <div class="card" onclick="dashboardListeAc('aktif')">
+                        <h3>Aktif Bakım</h3>
+                        <strong id="aktifBakim">0</strong>
+                    </div>
+
+                    <div class="card" onclick="dashboardListeAc('bekleyen')">
+                        <h3>Bekleyen İş</h3>
+                        <strong id="bekleyenIs">0</strong>
+                    </div>
+                </section>
+
+                <div id="dashboardPopup" class="dashboard-popup hidden">
+                    <div class="dashboard-popup-content">
+                        <button type="button"
+                                class="popup-close"
+                                onclick="dashboardPopupKapat()">
+                            ×
+                        </button>
+
+                        <h3 id="dashboardPopupBaslik"></h3>
+
+                        <div id="dashboardPopupIcerik"></div>
+                    </div>
+                </div>
+            </template>
         </main>
     </div>
 

@@ -38,42 +38,21 @@ window.onload = function () {
 };
 
 async function anaSayfaGoster() {
-    document.getElementById("pageContent").innerHTML = `
-        <div class="topbar">
-            <div>
-                <h1>Ana Sayfa</h1>
-                <p>Hoş geldin, ${kullanici.kullaniciAdi}</p>
-            </div>
-        </div>
+    const template =
+        document.getElementById("anaSayfaTemplate");
 
-       <section class="cards">
-    <div class="card" onclick="dashboardListeAc('musteri')">
-        <h3>Toplam Müşteri</h3>
-        <strong id="toplamMusteri">0</strong>
-    </div>
+    const pageContent =
+        document.getElementById("pageContent");
 
-    <div class="card" onclick="dashboardListeAc('aktif')">
-        <h3>Aktif Bakım</h3>
-        <strong id="aktifBakim">0</strong>
-    </div>
+    pageContent.innerHTML = template.innerHTML;
 
-    <div class="card" onclick="dashboardListeAc('bekleyen')">
-        <h3>Bekleyen İş</h3>
-        <strong id="bekleyenIs">0</strong>
-    </div>
-</section>
+    const hosGeldin =
+        document.getElementById("hosGeldinKullanici");
 
-<div id="dashboardPopup" class="modal hidden">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h2 id="dashboardPopupBaslik">Liste</h2>
-            <button type="button" onclick="dashboardPopupKapat()">✕</button>
-        </div>
-
-        <div id="dashboardPopupIcerik"></div>
-    </div>
-</div>
-    `;
+    if (hosGeldin) {
+        hosGeldin.textContent =
+            `Hoş geldin, ${kullanici.kullaniciAdi}`;
+    }
 
     await anaSayfaSayilariGetir();
 }
@@ -82,36 +61,37 @@ let anaSayfaMusteriler = [];
 let anaSayfaBakimlar = [];
 
 async function anaSayfaSayilariGetir() {
-    const musteriResponse = await apiFetch("/api/Musteriler");
-    const bakimResponse = await apiFetch("/api/BakimPlanlari");
+    const response =
+        await apiFetch("/api/BakimPlanlari/dashboard");
 
-
-    anaSayfaMusteriler = musteriResponse.ok ? await musteriResponse.json() : [];
-    anaSayfaBakimlar = bakimResponse.ok ? await bakimResponse.json() : [];
-
-    const toplamMusteriEl = document.getElementById("toplamMusteri");
-    const aktifBakimEl = document.getElementById("aktifBakim");
-    const bekleyenIsEl = document.getElementById("bekleyenIs");
-
-    if (!toplamMusteriEl || !aktifBakimEl || !bekleyenIsEl) {
+    if (!response.ok) {
+        console.error(
+            "Dashboard hatası:",
+            await response.text()
+        );
         return;
     }
 
-    toplamMusteriEl.textContent = anaSayfaMusteriler.length;
+    const sonuc = await response.json();
 
-    aktifBakimEl.textContent =
-        anaSayfaBakimlar.filter(x => x.durumKodu === "B" || x.durumKodu === "E").length;
+    // Bunlar backend'de kullanıcı yetkisine göre filtrelenmiş olmalı
+    anaSayfaMusteriler = sonuc.musteriler ?? [];
+    anaSayfaBakimlar = sonuc.bakimlar ?? [];
 
-    bekleyenIsEl.textContent =
-        anaSayfaBakimlar.filter(x => x.durumKodu === "B").length;
+    document.getElementById("toplamMusteri").textContent =
+        anaSayfaMusteriler.length;
 
     document.getElementById("aktifBakim").textContent =
-        anaSayfaBakimlar.filter(x => x.durumKodu === "B" || x.durumKodu === "E").length;
+        anaSayfaBakimlar.filter(x =>
+            x.durumKodu === "B" ||
+            x.durumKodu === "E"
+        ).length;
 
     document.getElementById("bekleyenIs").textContent =
-        anaSayfaBakimlar.filter(x => x.durumKodu === "B").length;
+        anaSayfaBakimlar.filter(x =>
+            x.durumKodu === "B"
+        ).length;
 }
-
 function dashboardListeAc(tip) {
     const baslik = document.getElementById("dashboardPopupBaslik");
     const icerik = document.getElementById("dashboardPopupIcerik");
