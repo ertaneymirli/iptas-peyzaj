@@ -12,6 +12,6 @@ public class KullaniciUpdateDto
     public string Adres { get; set; } = string.Empty;
     public string Mail { get; set; } = string.Empty;
     public string? Sifre { get; set; }
-    public string Rol { get; set; } = "Personel";
+    public string Rol { get; set; } = "2";
     public bool AktifMi { get; set; } = true;
 }

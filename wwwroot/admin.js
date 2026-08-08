@@ -188,6 +188,9 @@ async function sayfaYukle(sayfa) {
     if (sayfa.includes("kullanicilar/kullanicilar.html")) {
         kullaniciSayfasiGetir();
     }
+    if (sayfa.includes("musteri-kullanicisi/musteri-kullanicilari.html")) {
+        musteriKullanicilariniGetir();
+    }
 }
 
 function cikis() {

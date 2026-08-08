@@ -40,8 +40,8 @@ public class Kullanici
     public string? Sifre { get; set; }
 
     [FirestoreProperty]
-    public string Rol { get; set; } = "Personel";
-    // Admin, Personel, Yonetici gibi
+    public string Rol { get; set; } = "2";
+    // Admin=1, Personel=2
 
     [FirestoreProperty]
     public bool AktifMi { get; set; } = true;

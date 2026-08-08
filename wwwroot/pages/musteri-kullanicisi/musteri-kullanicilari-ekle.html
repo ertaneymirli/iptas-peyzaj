@@ -1,0 +1,83 @@
+﻿<div id="musteriKullaniciEditorPopup"
+     class="modal hidden">
+
+    <div class="modal-box musteri-kullanici-modal">
+
+        <div class="modal-header">
+            <h2 id="musteriKullaniciEditorBaslik">
+                Müşteri Kullanıcısı Ekle
+            </h2>
+
+            <button type="button"
+                    onclick="musteriKullaniciEditorKapat()">
+                ✕
+            </button>
+        </div>
+
+        <form id="musteriKullaniciEditorForm"
+              class="musteri-kullanici-form">
+
+            <!-- Düzenlemede kullanılacak bağlantı ID -->
+            <input type="hidden"
+                   id="musteriKullaniciBaglantiId" />
+
+            <!-- KULLANICI SEÇİMİ -->
+            <div class="arama-secim">
+                <label for="musteriKullaniciKullaniciArama">
+                    Kullanıcı
+                </label>
+
+                <input type="text"
+                       id="musteriKullaniciKullaniciArama"
+                       placeholder="Kullanıcı adı veya ad soyad yazın..."
+                       autocomplete="off"
+                       onfocus="musteriKullaniciSecenekleriniGoster('kullanici')"
+                       oninput="musteriKullaniciSecimiTemizleVeAra('kullanici')" />
+
+                <input type="hidden"
+                       id="musteriKullaniciKullaniciId" />
+
+                <div id="musteriKullaniciKullaniciSonuclari"
+                     class="arama-sonuclari hidden">
+                </div>
+            </div>
+
+            <!-- MÜŞTERİ SEÇİMİ -->
+            <div class="arama-secim">
+                <label for="musteriKullaniciMusteriArama">
+                    Müşteri
+                </label>
+
+                <input type="text"
+                       id="musteriKullaniciMusteriArama"
+                       placeholder="Müşteri no veya ad soyad yazın..."
+                       autocomplete="off"
+                       onfocus="musteriKullaniciSecenekleriniGoster('musteri')"
+                       oninput="musteriKullaniciSecimiTemizleVeAra('musteri')" />
+
+                <input type="hidden"
+                       id="musteriKullaniciMusteriId" />
+
+                <div id="musteriKullaniciMusteriSonuclari"
+                     class="arama-sonuclari hidden">
+                </div>
+            </div>
+
+            <div id="musteriKullaniciEditorMesaj"
+                 class="form-mesaj">
+            </div>
+
+            <div class="toolbar modal-actions">
+                <button type="button"
+                        class="danger"
+                        onclick="musteriKullaniciEditorKapat()">
+                    Vazgeç
+                </button>
+
+                <button type="submit">
+                    Kaydet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

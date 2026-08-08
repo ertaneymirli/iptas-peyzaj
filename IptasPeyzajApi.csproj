@@ -9,14 +9,17 @@
 	<ItemGroup>
 		<PackageReference Include="Google.Cloud.Firestore" Version="4.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+
 		<PackageReference Include="SkiaSharp" Version="3.119.4" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.4" />
+
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Folder Include="Backend\BakimPlanlari\Models\DTO\" />
-		<Folder Include="Backend\Controllers\" />
 		<Folder Include="Backend\Models\DTO\" />
+		<Folder Include="Backend\MusteriKullanicisi\Models\DTO\" />
 		<Folder Include="Backend\Teklifler\Models\DTO\" />
 		<Folder Include="Backend\musteriler\Models\DTO\" />
 		<Folder Include="Backend\Personeller\Models\DTO\" />

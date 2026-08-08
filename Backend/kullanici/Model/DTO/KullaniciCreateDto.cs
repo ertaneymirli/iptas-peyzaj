@@ -11,5 +11,5 @@ public class KullaniciCreateDto
     public string Adres { get; set; } = string.Empty;
     public string Mail { get; set; } = string.Empty;
     public string Sifre { get; set; } = string.Empty;
-    public string Rol { get; set; } = "Personel";
+    public string Rol { get; set; } = "2";
 }

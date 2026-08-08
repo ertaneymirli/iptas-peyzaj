@@ -1,0 +1,57 @@
+﻿<div class="topbar">
+    <div>
+        <h1>Müşteri Kullanıcıları</h1>
+        <p>
+            Kullanıcıların erişebileceği müşterileri yönetin
+        </p>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="toolbar">
+        <button type="button"
+                onclick="musteriKullanicisiEkle()">
+            Ekle
+        </button>
+
+        <button type="button"
+                class="danger"
+                onclick="musteriKullanicisiSil()">
+            Sil
+        </button>
+    </div>
+
+    <div class="musteri-kullanici-arama">
+        <input type="text"
+               id="musteriKullaniciArama"
+               placeholder="Kullanıcı veya müşteri ara..."
+               oninput="musteriKullanicisiAra()" />
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Kullanıcı Ad Soyad</th>
+                <th>Müşteri Ad Soyad</th>
+            </tr>
+        </thead>
+
+        <tbody id="musteriKullaniciListe"></tbody>
+    </table>
+
+    <div id="musteriKullaniciBosMesaj"
+         class="bos-liste hidden">
+        Kayıt bulunamadı.
+    </div>
+</section>
+
+<!-- Tablo satır şablonu -->
+<template id="musteriKullaniciSatirTemplate">
+    <tr onclick="musteriKullaniciSatirSec(this)">
+        <td data-bind-text="kullaniciAdSoyad"></td>
+        <td data-bind-text="musteriAdSoyad"></td>
+    </tr>
+</template>
+
+<!-- Ekleme/düzenleme popup'ı buraya yüklenecek -->
+<div id="musteriKullaniciPopupHost"></div>

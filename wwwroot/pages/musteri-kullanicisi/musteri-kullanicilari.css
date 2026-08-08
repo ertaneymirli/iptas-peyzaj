@@ -1,0 +1,131 @@
+﻿/* ÜST İŞLEM BUTONLARI */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+    .toolbar button {
+        padding: 11px 18px;
+        border: none;
+        border-radius: 9px;
+        color: white;
+        background: #1f7a3f;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .toolbar button:hover {
+            background: #155d2f;
+        }
+
+        .toolbar button.danger {
+            background: #b00020;
+        }
+
+            .toolbar button.danger:hover {
+                background: #7a0015;
+            }
+
+/* ARAMA ALANI */
+.musteri-kullanici-arama {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 18px;
+}
+
+    .musteri-kullanici-arama input {
+        width: 100%;
+        max-width: 360px;
+        box-sizing: border-box;
+        padding: 11px 14px;
+        border: 1px solid #cbd5cb;
+        border-radius: 9px;
+        color: #1f2937;
+        background: white;
+        font-size: 14px;
+        outline: none;
+    }
+
+        .musteri-kullanici-arama input::placeholder {
+            color: #9ca3af;
+            opacity: 1;
+        }
+
+        .musteri-kullanici-arama input:focus {
+            border-color: #1f7a3f;
+            box-shadow: 0 0 0 3px rgba(31, 122, 63, 0.15);
+        }
+
+/* TABLO */
+.musteri-kullanici-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.musteri-kullanici-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+    .musteri-kullanici-table th {
+        padding: 13px;
+        color: white;
+        background: #174d2a;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .musteri-kullanici-table td {
+        padding: 12px 13px;
+        border-bottom: 1px solid #e5e7eb;
+        color: #1f2937;
+    }
+
+    .musteri-kullanici-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+        .musteri-kullanici-table tbody tr:hover {
+            background: #f1f8f1;
+        }
+
+        .musteri-kullanici-table tbody tr.selected {
+            background: #dff1df;
+            font-weight: bold;
+        }
+
+/* BOŞ LİSTE MESAJI */
+.bos-liste {
+    padding: 24px;
+    color: #6b7280;
+    text-align: center;
+}
+
+/* GENEL */
+.hidden {
+    display: none !important;
+}
+
+/* MOBİL */
+@media (max-width: 640px) {
+    .toolbar {
+        flex-direction: column;
+    }
+
+        .toolbar button {
+            width: 100%;
+        }
+
+    .musteri-kullanici-arama input {
+        max-width: none;
+    }
+
+    .musteri-kullanici-table {
+        min-width: 600px;
+    }
+}

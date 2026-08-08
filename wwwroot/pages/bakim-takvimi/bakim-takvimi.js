@@ -180,7 +180,7 @@ function bakimlariTabloyaBas(liste) {
     bakimPagerBas();
 }
 
-function bakimSatirSec(satir, id) {
+function bakimSatirSec(satir) {
     document
         .querySelectorAll("#bakimListe tr")
         .forEach(function (item) {
@@ -190,7 +190,8 @@ function bakimSatirSec(satir, id) {
     satir.classList.add("selected");
 
     seciliBakim = bakimlar.find(function (bakim) {
-        return String(bakim.id) === String(id);
+        return String(bakim.id) ===
+            String(satir.dataset.id);
     }) ?? null;
 }
 function bakimPagerBas() {
