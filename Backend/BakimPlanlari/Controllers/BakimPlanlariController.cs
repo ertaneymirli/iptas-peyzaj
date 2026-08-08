@@ -448,6 +448,24 @@ public class BakimPlanlariController : ControllerBase
             bakimlar
         });
     }
+    [Authorize(Roles = "1")]
+    [HttpPut("eksik-musteri-idlerini-doldur")]
+    public async Task<IActionResult>
+    EksikMusteriIdleriniDoldur()
+    {
+        var sonuc =
+            await _helper
+                .EksikMusteriIdleriniDoldur();
+
+        return Ok(new
+        {
+            guncellenenKayitSayisi =
+                sonuc.Guncellenen,
+
+            eslesmeyenKayitSayisi =
+                sonuc.Eslesmeyen
+        });
+    }
 }
 
 public class BakimDurumDto

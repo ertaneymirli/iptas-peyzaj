@@ -73,6 +73,23 @@ async function anaSayfaSayilariGetir() {
     }
 
     const sonuc = await response.json();
+    const toplamMusteriEl =
+        document.getElementById("toplamMusteri");
+
+    const aktifBakimEl =
+        document.getElementById("aktifBakim");
+
+    const bekleyenIsEl =
+        document.getElementById("bekleyenIs");
+
+    // Kullanıcı başka menüye geçtiyse elementler artık yoktur
+    if (
+        !toplamMusteriEl ||
+        !aktifBakimEl ||
+        !bekleyenIsEl
+    ) {
+        return;
+    }
 
     // Bunlar backend'de kullanıcı yetkisine göre filtrelenmiş olmalı
     anaSayfaMusteriler = sonuc.musteriler ?? [];

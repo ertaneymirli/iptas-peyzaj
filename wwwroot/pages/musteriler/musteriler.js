@@ -210,7 +210,13 @@ function satirSil(e, id) {
 }
 function tabloyaBas(liste) {
     aktifMusteriListesi = liste;
+    const tabloBody =
+        document.getElementById("musteriTabloBody");
 
+    if (!tabloBody) {
+        // Kullanıcı müşteri ekranından ayrılmıştır
+        return;
+    }
     const tbody = document.getElementById("musteriListe");
     tbody.innerHTML = "";
 

@@ -138,6 +138,7 @@ public class MusteriHelper
     eskiMusteri.PeriyodikBakim != musteri.PeriyodikBakim ||
     eskiMusteri.PeriyodikBakimTuru != musteri.PeriyodikBakimTuru;
         await docRef.SetAsync(musteri, SetOptions.Overwrite);
+        musteri.Id = id;
         if (bakimPlaniDegisti)
         {
             await _bakimPlaniHelper.MusteriBakimPlaniniGuncelle(
@@ -145,7 +146,7 @@ public class MusteriHelper
                 "Müşteri bakım tarihi veya periyodu değiştiği için eski bekleyen bakım planı iptal edildi."
             );
         }
-        musteri.Id = id;
+      
         return musteri;
     }
 

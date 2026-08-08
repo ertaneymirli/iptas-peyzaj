@@ -345,5 +345,74 @@ public class BakimPlaniHelper
 
         return liste;
     }
+    public async Task<(int Guncellenen, int Eslesmeyen)>
+    EksikMusteriIdleriniDoldur()
+    {
+        QuerySnapshot musteriSnapshot =
+            await _db.Collection("musteriler")
+                .GetSnapshotAsync();
+
+        Dictionary<int, string> musteriIdMap = new();
+
+        foreach (DocumentSnapshot doc
+            in musteriSnapshot.Documents)
+        {
+            if (!doc.Exists)
+                continue;
+
+            Musteri musteri =
+                doc.ConvertTo<Musteri>();
+
+            musteriIdMap[musteri.MusteriNo] =
+                doc.Id;
+        }
+
+        QuerySnapshot bakimSnapshot =
+            await _db.Collection(CollectionName)
+                .GetSnapshotAsync();
+
+        int guncellenen = 0;
+        int eslesmeyen = 0;
+
+        foreach (DocumentSnapshot doc
+            in bakimSnapshot.Documents)
+        {
+            if (!doc.Exists)
+                continue;
+
+            BakimPlani bakim =
+                doc.ConvertTo<BakimPlani>();
+
+            // ID zaten varsa dokunma
+            if (!string.IsNullOrWhiteSpace(
+                bakim.MusteriId))
+            {
+                continue;
+            }
+
+            if (
+                musteriIdMap.TryGetValue(
+                    bakim.MusteriNo,
+                    out string? musteriId
+                )
+            )
+            {
+                await doc.Reference.UpdateAsync(
+                    new Dictionary<string, object>
+                    {
+                    { "MusteriId", musteriId }
+                    }
+                );
+
+                guncellenen++;
+            }
+            else
+            {
+                eslesmeyen++;
+            }
+        }
+
+        return (guncellenen, eslesmeyen);
+    }
 
 }
