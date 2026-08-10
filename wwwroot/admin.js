@@ -194,7 +194,8 @@ function cikis() {
     localStorage.removeItem("kullanici");
     localStorage.removeItem("rol");
     localStorage.removeItem("token");
-    window.location.href = "index.html";
+
+    window.location.replace("https://iptaspeyzaj.com.tr/");
 }
 const rol = localStorage.getItem("rol");
 
