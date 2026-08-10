@@ -1,25 +1,242 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>İPTAŞ Peyzaj - Giriş</title>
-    <link rel="stylesheet" href="login.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>İPTAŞ Peyzaj | Peyzaj ve Bahçe Sistemleri</title>
+    <meta name="description" content="İPTAŞ Peyzaj; peyzaj tasarımı, bahçe uygulamaları, otomatik sulama sistemleri, çim, bitkilendirme ve bahçe bakımı hizmetleri sunar." />
+    <meta name="keywords" content="İPTAŞ Peyzaj, iptaspeyzaj, peyzaj, bahçe düzenleme, otomatik sulama sistemi, bahçe bakımı, çim uygulama" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#1F3D2B" />
+    <link rel="canonical" href="https://iptaspeyzaj.com.tr/" />
+    <link rel="icon" type="image/png" href="logo-iptas-peyzaj.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content="İPTAŞ Peyzaj" />
+    <meta property="og:title" content="İPTAŞ Peyzaj | Peyzaj ve Bahçe Sistemleri" />
+    <meta property="og:description" content="Doğayı yaşam alanınıza taşıyan peyzaj ve bahçe çözümleri." />
+    <meta property="og:url" content="https://iptaspeyzaj.com.tr/" />
+    <meta property="og:image" content="https://iptaspeyzaj.com.tr/logo-iptas-peyzaj.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "İPTAŞ Peyzaj",
+      "url": "https://iptaspeyzaj.com.tr/",
+      "logo": "https://iptaspeyzaj.com.tr/logo-iptas-peyzaj.png",
+      "telephone": "+90 507 594 90 29",
+      "description": "Peyzaj tasarımı, bahçe uygulamaları, otomatik sulama sistemleri ve bahçe bakımı hizmetleri.",
+      "sameAs": ["https://www.instagram.com/iptaspeyzaj/"],
+      "areaServed": "Türkiye"
+    }
+    </script>
 </head>
 <body>
-    <div class="login-box">
-        <h1>İPTAŞ Peyzaj</h1>
-        <p>Admin Panel Girişi</p>
 
-        <form id="loginForm">
-            <input type="text" id="kullaniciAdi" placeholder="Kullanıcı Adı" required />
-            <input type="password" id="sifre" placeholder="Şifre" required />
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" />
 
-            <button type="submit">Giriş Yap</button>
-        </form>
+    <header class="nav">
+        <div class="nav-inner">
+            <a href="#top" class="nav-logo" aria-label="İPTAŞ Peyzaj ana sayfa">
+                <img src="logo-iptas-peyzaj.png" alt="İPTAŞ Peyzaj logosu" />
+            </a>
 
-        <div id="mesaj"></div>
-    </div>
+            <nav class="nav-links">
+                <a href="#hizmetler">Hizmetler</a>
+                <a href="#galeri">Galeri</a>
+                <a href="#hakkimizda">Hakkımızda</a>
+                <a href="#iletisim">İletişim</a>
+            </nav>
 
-    <script src="login.js"></script>
+            <div class="nav-right">
+                <a href="https://panel.iptaspeyzaj.com.tr" class="btn-giris">Giriş Yap</a>
+                <label for="nav-toggle" class="nav-burger" aria-label="Menüyü aç">
+                    <span></span><span></span><span></span>
+                </label>
+            </div>
+        </div>
+
+        <nav class="nav-links-mobile">
+            <a href="#hizmetler">Hizmetler</a>
+            <a href="#galeri">Galeri</a>
+            <a href="#hakkimizda">Hakkımızda</a>
+            <a href="#iletisim">İletişim</a>
+        </nav>
+    </header>
+
+    <main id="top">
+
+        <section class="hero">
+            <div class="hero-media" aria-hidden="true"></div>
+            <div class="hero-content reveal">
+                <p class="eyebrow">Bahçe &amp; Peyzaj Uygulamaları</p>
+                <h1>Yeşil alanı,<br>yaşam alanına<br>dönüştürüyoruz.</h1>
+                <p class="hero-sub">İPTAŞ Peyzaj; tasarımdan uygulamaya, sulama sisteminden düzenli bakıma kadar bahçenizin her aşamasında yanınızda.</p>
+                <div class="hero-actions">
+                    <a href="#iletisim" class="btn-primary">Teklif Alın</a>
+                    <a href="#galeri" class="btn-ghost">Projelerimizi Görün</a>
+                </div>
+            </div>
+            <a href="#hizmetler" class="scroll-hint" aria-label="Aşağı kaydır">
+                <span></span>
+            </a>
+        </section>
+
+        <section id="hizmetler" class="section">
+            <div class="section-head reveal">
+                <p class="eyebrow">Hizmetlerimiz</p>
+                <h2>Bahçenizin ihtiyacı olan her şey</h2>
+            </div>
+
+            <div class="cards">
+                <article class="card reveal">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3c3 3 5 6 5 9a5 5 0 0 1-10 0c0-3 2-6 5-9Z" stroke="currentColor" stroke-width="1.4" /><path d="M12 12v9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+                    </div>
+                    <h3>Bahçe &amp; Peyzaj Tasarımı</h3>
+                    <p>Araziye ve kullanım amacına özel, ölçekli peyzaj tasarım ve projelendirme.</p>
+                </article>
+
+                <article class="card reveal">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="6" r="2.2" stroke="currentColor" stroke-width="1.4" /><path d="M12 8v3M6 20c0-4 3-6 6-6s6 2 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+                    </div>
+                    <h3>Sulama Sistemleri</h3>
+                    <p>Otomatik damla ve yağmurlama sulama kurulumu, projelendirme ve bakımı.</p>
+                </article>
+
+                <article class="card reveal">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10l8-6 8 6v10" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /><path d="M9 20v-6h6v6" stroke="currentColor" stroke-width="1.4" /></svg>
+                    </div>
+                    <h3>Çim &amp; Bitkilendirme</h3>
+                    <p>Hazır çim serimi, tohumlama, ağaç ve mevsimlik bitki dikimi.</p>
+                </article>
+
+                <article class="card reveal">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4" /></svg>
+                    </div>
+                    <h3>Bakım Hizmetleri</h3>
+                    <p>Periyodik budama, gübreleme, ilaçlama ve genel bahçe bakımı.</p>
+                </article>
+            </div>
+        </section>
+
+        <div class="vine-divider reveal" aria-hidden="true">
+            <svg viewBox="0 0 1200 60" preserveAspectRatio="none">
+                <path class="vine-path" d="M0 30 C 150 0, 300 60, 450 30 S 750 0, 900 30 S 1100 55, 1200 25" fill="none" stroke-width="2" />
+                <circle class="vine-leaf" cx="150" cy="14" r="4" />
+                <circle class="vine-leaf" cx="450" cy="30" r="4" />
+                <circle class="vine-leaf" cx="750" cy="14" r="4" />
+                <circle class="vine-leaf" cx="1050" cy="42" r="4" />
+            </svg>
+        </div>
+
+        <section id="galeri" class="section">
+            <div class="section-head reveal">
+                <p class="eyebrow">Galeri</p>
+                <h2>Peyzaj uygulamalarından ilham veren kareler</h2>
+                <p class="section-note">Bu alan kendi proje fotoğraflarınızla kolayca güncellenmek üzere hazırlanmıştır.</p>
+            </div>
+
+            <div class="gallery">
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=1000&q=85" alt="Bahçe peyzaj uygulaması" loading="lazy" /></figure>
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=1000&q=85" alt="Bahçe bitkilendirme çalışması" loading="lazy" /></figure>
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=1000&q=85" alt="Yeşil alan tasarımı" loading="lazy" /></figure>
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1598902108854-10e335adac99?auto=format&fit=crop&w=1000&q=85" alt="Profesyonel bahçe bakımı" loading="lazy" /></figure>
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1591857177580-dc82b9ac4e1e?auto=format&fit=crop&w=1000&q=85" alt="Peyzaj bitkileri" loading="lazy" /></figure>
+                <figure class="gallery-item reveal"><img src="https://images.unsplash.com/photo-1587556930727-0c7e278c5758?auto=format&fit=crop&w=1000&q=85" alt="Bahçe düzenleme örneği" loading="lazy" /></figure>
+            </div>
+        </section>
+
+        <section id="hakkimizda" class="section about">
+            <div class="about-text reveal">
+                <p class="eyebrow">Hakkımızda</p>
+                <h2>Toprakla kurduğumuz iş, kalıcı sonuç bırakır</h2>
+                <p>İPTAŞ Peyzaj olarak özel ve kurumsal projelerde; tasarımdan dikime, sulamadan düzenli bakıma kadar bahçenizin bütün sürecini tek elden yürütüyoruz. Ekibimiz, arazinin toprağını ve iklimini gözeterek uzun ömürlü, az bakım gerektiren peyzaj çözümleri üretir.</p>
+            </div>
+            <div class="about-stats reveal">
+                <div class="stat">
+                    <span class="stat-num">Planlı</span>
+                    <span class="stat-label">Proje Süreci</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num">Özenli</span>
+                    <span class="stat-label">Uygulama</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-num">Sürekli</span>
+                    <span class="stat-label">Bakım Desteği</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="iletisim" class="section contact">
+            <div class="section-head reveal">
+                <p class="eyebrow">İletişim</p>
+                <h2>Projenizi konuşalım</h2>
+            </div>
+
+            <div class="contact-grid reveal">
+                <a class="contact-card" href="tel:+905075949029">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M6 3h3l2 5-2.5 2A11 11 0 0 0 14 15.5l2-2.5 5 2v3a2 2 0 0 1-2 2C10.5 20 4 13.5 4 5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg>
+                    </div>
+                    <h3>Telefon</h3>
+                    <p>+90 507 594 90 29</p>
+                </a>
+
+                <a class="contact-card" href="https://www.instagram.com/iptaspeyzaj/" target="_blank" rel="noopener">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="1.4" /><circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.4" /><circle cx="16.5" cy="7.5" r="1" fill="currentColor" /></svg>
+                    </div>
+                    <h3>Instagram</h3>
+                    <p>@iptaspeyzaj</p>
+                </a>
+
+                <a class="contact-card" href="https://wa.me/905075949029" target="_blank" rel="noopener">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.4" /><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </div>
+                    <h3>WhatsApp</h3>
+                    <p>Mesaj Gönder</p>
+                </a>
+
+                <div class="contact-card contact-card-static">
+                    <div class="card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z" stroke="currentColor" stroke-width="1.4" /><circle cx="12" cy="9.5" r="2.3" stroke="currentColor" stroke-width="1.4" /></svg>
+                    </div>
+                    <h3>Hizmet</h3>
+                    <p>Peyzaj ve bahçe sistemleri<br>için bize ulaşın.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <a href="#top" class="nav-logo footer-logo">
+                <img src="logo-iptas-peyzaj.png" alt="İPTAŞ Peyzaj" />
+            </a>
+            <nav class="footer-links">
+                <a href="#hizmetler">Hizmetler</a>
+                <a href="#galeri">Galeri</a>
+                <a href="#hakkimizda">Hakkımızda</a>
+                <a href="#iletisim">İletişim</a>
+                <a href="https://panel.iptaspeyzaj.com.tr">Giriş Yap</a>
+            </nav>
+            <p class="footer-copy">© <span id="year"></span> İPTAŞ Peyzaj. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <a class="whatsapp-float" href="https://wa.me/905075949029" target="_blank" rel="noopener" aria-label="WhatsApp ile iletişime geç">WhatsApp</a>
+
+    <script src="index.js"></script>
 </body>
 </html>
