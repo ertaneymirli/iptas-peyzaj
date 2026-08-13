@@ -1,0 +1,25 @@
+Program.cs dosyanizin en ustune ekleyin:
+
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.VeriAktarimi;
+using Microsoft.EntityFrameworkCore;
+
+
+builder olusturulduktan sonra, builder.Build() satirindan once ekleyin:
+
+string azureSqlConnection = builder.Configuration.GetConnectionString("AzureSql")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:AzureSql ayari bulunamadi.");
+
+builder.Services.AddDbContext<IptasPeyzajDbContext>(options =>
+    options.UseSqlServer(
+        azureSqlConnection,
+        sql => sql.EnableRetryOnFailure()));
+
+builder.Services.AddScoped<FirestoreToSqlMigrationService>();
+
+
+NOT:
+- FirestoreDb ve mevcut helper kayitlarini bu asamada silmeyin.
+- GoogleDriveStorage kaydiniz varsa aynen kalsin.
+- Bu asama sadece SQL tablolarini ve kontrollu veri aktarimini ekler.

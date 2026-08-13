@@ -8,10 +8,24 @@ using IptasPeyzajApi.Backend.MusteriKullanicilari.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.VeriAktarimi;
+using Microsoft.EntityFrameworkCore;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
+string azureSqlConnection =
+    builder.Configuration.GetConnectionString("AzureSql")
+    ?? throw new InvalidOperationException(
+        "ConnectionStrings:AzureSql ayarı bulunamadı.");
+
+builder.Services.AddDbContext<IptasPeyzajDbContext>(options =>
+    options.UseSqlServer(
+        azureSqlConnection,
+        sql => sql.EnableRetryOnFailure()));
+
+builder.Services.AddScoped<FirestoreToSqlMigrationService>();
 builder.Services.AddScoped<MusteriHelper>();
 builder.Services.AddScoped<BakimPlaniHelper>();
 builder.Services.AddScoped<PersonelHelper>();
