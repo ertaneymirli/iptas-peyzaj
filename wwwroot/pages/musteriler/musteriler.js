@@ -2,8 +2,8 @@
 let seciliMusteri = null;
 let formMode = "ekle";
 let aktifMusteriListesi = [];
-let sayfaNo = 1;
-let sayfaBoyutu = 10;
+let musteriSayfaNo = 1;
+let musteriSayfaBoyutu = 10;
 
 async function musterileriGetir() {
     const response = await apiFetch("/api/Musteriler");
@@ -15,16 +15,7 @@ async function musterileriGetir() {
 
     musteriler = await response.json();
 
-    tabloyaBas(musteriler);
-}
-async function musteriEklePopupAc() {
-    const response = await apiFetch("/pages/musteriler/musteri-ekle.html");
-    const html = await response.text();
-
-    document.getElementById("musteriEkleIcerik").innerHTML = html;
-    document.getElementById("musteriEklePopup").classList.remove("hidden");
-
-    musteriEkleFormHazirla();
+    musteriTabloyaBas(musteriler);
 }
 async function pasifMusterileriGetir() {
     const response = await apiFetch("/api/Musteriler/durum/P");
@@ -35,7 +26,7 @@ async function pasifMusterileriGetir() {
     }
 
     musteriler = await response.json();
-    tabloyaBas(musteriler);
+    musteriTabloyaBas(musteriler);
 }
 function satirAktifEt(e, id) {
     e.stopPropagation();
@@ -79,15 +70,6 @@ function musteriEklePopupKapat() {
     document.getElementById("musteriEkleIcerik").innerHTML = "";
 }
 
-function musteriDegistir() {
-    if (!seciliMusteri) {
-        alert("Lütfen listeden bir müşteri seç.");
-        return;
-    }
-
-    alert("Değiştir ekranını sonra bağlayacağız.");
-}
-
 async function musteriSil() {
     if (!seciliMusteri) {
         alert("Lütfen pasif yapmak için müşteri seç.");
@@ -115,7 +97,7 @@ async function musteriSil() {
     }
 }
 
-function tarihGoster(value) {
+function musteriTarihGoster(value) {
     if (!value) return "-";
     return new Date(value).toLocaleDateString("tr-TR");
 }
@@ -208,20 +190,19 @@ function satirSil(e, id) {
 
     musteriSil();
 }
-function tabloyaBas(liste) {
+function musteriTabloyaBas(liste) {
     aktifMusteriListesi = liste;
-    const tabloBody =
-        document.getElementById("musteriTabloBody");
+    const tbody = document.getElementById("musteriListe");
 
-    if (!tabloBody) {
-        // Kullanıcı müşteri ekranından ayrılmıştır
+    if (!tbody) {
         return;
     }
-    const tbody = document.getElementById("musteriListe");
+
     tbody.innerHTML = "";
 
-    const baslangic = (sayfaNo - 1) * sayfaBoyutu;
-    const bitis = baslangic + sayfaBoyutu;
+    const baslangic =
+        (musteriSayfaNo - 1) * musteriSayfaBoyutu;
+    const bitis = baslangic + musteriSayfaBoyutu;
 
     const sayfaListesi = liste.slice(baslangic, bitis);
 
@@ -251,19 +232,21 @@ function tabloyaBas(liste) {
             <td>${m.telefon ?? ""}</td>
             <td>${m.sehir ?? ""}</td>
             <td>${m.mekanTipi ?? ""}</td>
-            <td>${tarihGoster(m.bakimTarihi)}</td>
+            <td>${musteriTarihGoster(m.bakimTarihi)}</td>
         `;
 
         tbody.appendChild(tr);
     });
 
-    pagerBas();
+    musteriPagerBas();
 }
-function pagerBas() {
+function musteriPagerBas() {
     const pager = document.getElementById("musteriPager");
     if (!pager) return;
 
-    const toplamSayfa = Math.ceil(aktifMusteriListesi.length / sayfaBoyutu);
+    const toplamSayfa = Math.ceil(
+        aktifMusteriListesi.length / musteriSayfaBoyutu
+    );
 
     if (toplamSayfa <= 1) {
         pager.innerHTML = "";
@@ -273,26 +256,26 @@ function pagerBas() {
     let html = "";
 
     html += `
-        <button onclick="sayfaDegistir(1)" ${sayfaNo === 1 ? "disabled" : ""}>
+        <button onclick="musteriSayfaDegistir(1)" ${musteriSayfaNo === 1 ? "disabled" : ""}>
             <<
         </button>
     `;
 
     html += `
-        <button onclick="sayfaDegistir(${sayfaNo - 1})" ${sayfaNo === 1 ? "disabled" : ""}>
+        <button onclick="musteriSayfaDegistir(${musteriSayfaNo - 1})" ${musteriSayfaNo === 1 ? "disabled" : ""}>
             <
         </button>
     `;
 
-    let baslangic = Math.max(1, sayfaNo - 5);
-    let bitis = Math.min(toplamSayfa, sayfaNo + 5);
+    let baslangic = Math.max(1, musteriSayfaNo - 5);
+    let bitis = Math.min(toplamSayfa, musteriSayfaNo + 5);
 
-    if (sayfaNo <= 5) {
+    if (musteriSayfaNo <= 5) {
         baslangic = 1;
         bitis = Math.min(10, toplamSayfa);
     }
 
-    if (sayfaNo > toplamSayfa - 5) {
+    if (musteriSayfaNo > toplamSayfa - 5) {
         baslangic = Math.max(1, toplamSayfa - 9);
         bitis = toplamSayfa;
     }
@@ -304,8 +287,8 @@ function pagerBas() {
     for (let i = baslangic; i <= bitis; i++) {
         html += `
             <button
-                class="${sayfaNo === i ? "active-page" : ""}"
-                onclick="sayfaDegistir(${i})">
+                class="${musteriSayfaNo === i ? "active-page" : ""}"
+                onclick="musteriSayfaDegistir(${i})">
                 ${i}
             </button>
         `;
@@ -316,24 +299,26 @@ function pagerBas() {
     }
 
     html += `
-        <button onclick="sayfaDegistir(${sayfaNo + 1})" ${sayfaNo === toplamSayfa ? "disabled" : ""}>
+        <button onclick="musteriSayfaDegistir(${musteriSayfaNo + 1})" ${musteriSayfaNo === toplamSayfa ? "disabled" : ""}>
             >
         </button>
     `;
 
     html += `
-        <button onclick="sayfaDegistir(${toplamSayfa})" ${sayfaNo === toplamSayfa ? "disabled" : ""}>
+        <button onclick="musteriSayfaDegistir(${toplamSayfa})" ${musteriSayfaNo === toplamSayfa ? "disabled" : ""}>
             >>
         </button>
     `;
 
     pager.innerHTML = html;
 }
-function sayfaDegistir(yeniSayfa) {
-    const toplamSayfa = Math.ceil(aktifMusteriListesi.length / sayfaBoyutu);
+function musteriSayfaDegistir(yeniSayfa) {
+    const toplamSayfa = Math.ceil(
+        aktifMusteriListesi.length / musteriSayfaBoyutu
+    );
 
     if (yeniSayfa < 1 || yeniSayfa > toplamSayfa) return;
 
-    sayfaNo = yeniSayfa;
-    tabloyaBas(aktifMusteriListesi);
+    musteriSayfaNo = yeniSayfa;
+    musteriTabloyaBas(aktifMusteriListesi);
 }

@@ -195,7 +195,15 @@ function cikis() {
     localStorage.removeItem("rol");
     localStorage.removeItem("token");
 
-    window.location.replace("https://iptaspeyzaj.com.tr/");
+    const localMi =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+
+    window.location.replace(
+        localMi
+            ? "/index.html"
+            : "https://iptaspeyzaj.com.tr/"
+    );
 }
 const rol = localStorage.getItem("rol");
 

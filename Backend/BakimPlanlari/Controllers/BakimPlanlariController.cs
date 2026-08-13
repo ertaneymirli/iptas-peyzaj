@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Google;
 using IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
 using IptasPeyzajApi.Backend.BakimPlanlari.Models;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
@@ -17,6 +18,7 @@ public class BakimPlanlariController : ControllerBase
     private readonly MusteriHelper _musteriHelper;
     private readonly BakimPlaniHelper _helper;
     private readonly PersonelHelper _personelHelper;
+    private readonly GoogleDriveStorage _driveStorage;
     private readonly MusteriKullanicisiHelper
         _musteriKullanicisiHelper;
 
@@ -24,13 +26,15 @@ public class BakimPlanlariController : ControllerBase
         BakimPlaniHelper helper,
         MusteriHelper musteriHelper,
         PersonelHelper personelHelper,
-        MusteriKullanicisiHelper musteriKullanicisiHelper)
+        MusteriKullanicisiHelper musteriKullanicisiHelper,
+        GoogleDriveStorage driveStorage)
     {
         _helper = helper;
         _musteriHelper = musteriHelper;
         _personelHelper = personelHelper;
         _musteriKullanicisiHelper =
             musteriKullanicisiHelper;
+        _driveStorage = driveStorage;
     }
 
     private bool AdminMi()
@@ -400,6 +404,54 @@ public class BakimPlanlariController : ControllerBase
         }
 
         return Ok(detaylar);
+    }
+
+    [HttpGet("detaylar/{detayId}/resim")]
+    public async Task<IActionResult> DetayResmi(
+        string detayId,
+        CancellationToken cancellationToken)
+    {
+        BakimDetay? detay =
+            await _helper.BakimDetayGetir(detayId);
+
+        if (detay == null ||
+            string.IsNullOrWhiteSpace(detay.DriveDosyaId))
+        {
+            return NotFound("Bakım resmi bulunamadı.");
+        }
+
+        BakimPlani? bakim =
+            await _helper.BakimGetir(detay.BakimId);
+
+        if (bakim == null)
+        {
+            return NotFound("Bakım planı bulunamadı.");
+        }
+
+        if (!await BakimaErisimVarMi(bakim))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            DriveResim resim =
+                await _driveStorage.ResimIndirAsync(
+                    detay.DriveDosyaId,
+                    cancellationToken);
+
+            Response.Headers["Cache-Control"] =
+                "private, max-age=3600";
+            Response.Headers["X-Content-Type-Options"] =
+                "nosniff";
+
+            return File(resim.Bytes, resim.ContentType);
+        }
+        catch (GoogleApiException ex)
+            when (ex.Error?.Code == 404)
+        {
+            return NotFound("Bakım resmi Drive'da bulunamadı.");
+        }
     }
     [HttpGet("dashboard")]
     public async Task<IActionResult> Dashboard()

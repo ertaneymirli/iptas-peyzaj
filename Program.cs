@@ -18,11 +18,14 @@ builder.Services.AddScoped<PersonelHelper>();
 builder.Services.AddScoped<TeklifHelper>();
 builder.Services.AddScoped<KullaniciHelper>();
 builder.Services.AddScoped<MusteriKullanicisiHelper>();
+builder.Services.AddSingleton<GoogleDriveStorage>();
 builder.Services.AddControllers();
 builder.Services.AddScoped<
     MusteriKullanicisiHelper
 >();
-var jwtKey = "iptas-peyzaj-cok-gizli-anahtar-2026";
+var jwtKey = builder.Configuration["JWT_KEY"]
+    ?? Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? "iptas-peyzaj-cok-gizli-anahtar-2026";
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

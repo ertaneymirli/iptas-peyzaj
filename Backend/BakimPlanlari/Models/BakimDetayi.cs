@@ -20,6 +20,9 @@ public class BakimDetay
     public string ResimUrl { get; set; } = string.Empty;
 
     [FirestoreProperty]
+    public string DriveDosyaId { get; set; } = string.Empty;
+
+    [FirestoreProperty]
     public DateTime KayitTarihi { get; set; } = DateTime.UtcNow;
     [FirestoreProperty]
     public string Ad { get; set; } = "";

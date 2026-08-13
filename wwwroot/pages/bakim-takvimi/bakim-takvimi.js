@@ -670,8 +670,32 @@ function seciliPersonelTabloBas() {
         tbody.appendChild(tr);
     });
 }
+async function bakimResimUrlHazirla(resimUrl) {
+    if (!resimUrl) return "";
+
+    const response = await apiFetch(resimUrl);
+
+    if (!response.ok) {
+        console.error("Bakım resmi alınamadı:", await response.text());
+        return "";
+    }
+
+    const nesneUrl = URL.createObjectURL(await response.blob());
+    window.__bakimResimNesneUrlListesi ??= [];
+    window.__bakimResimNesneUrlListesi.push(nesneUrl);
+    return nesneUrl;
+}
+
+function bakimResimUrlTemizle() {
+    (window.__bakimResimNesneUrlListesi ?? [])
+        .forEach(url => URL.revokeObjectURL(url));
+
+    window.__bakimResimNesneUrlListesi = [];
+}
+
 async function bakimDetayGoster(e, bakimId) {
     e.stopPropagation();
+    bakimResimUrlTemizle();
 
     const bakim = bakimlar.find(x => x.id == bakimId);
 
@@ -682,6 +706,27 @@ async function bakimDetayGoster(e, bakimId) {
     if (response.ok) {
         detaylar = await response.json();
     }
+
+    const resimAdresleri = [
+        ...new Set(
+            detaylar
+                .map(x => x.resimUrl)
+                .filter(Boolean)
+        )
+    ];
+
+    const gosterimAdresleri = new Map(
+        await Promise.all(
+            resimAdresleri.map(async adres => [
+                adres,
+                await bakimResimUrlHazirla(adres)
+            ])
+        )
+    );
+
+    detaylar.forEach(d => {
+        d.gosterimUrl = gosterimAdresleri.get(d.resimUrl) ?? "";
+    });
 
     const icerik = document.getElementById("bakimDetayIcerik");
 
@@ -707,8 +752,8 @@ async function bakimDetayGoster(e, bakimId) {
                         <p><b>Personel:</b> ${d.personelAdSoyad ?? d.personelAdi ?? "-"}</p>
                         <p><b>Resim Tipi:</b> ${d.resimTip ?? "Resim yok"}</p>
 
-                ${d.resimUrl && d.resimUrl !== ""
-                ? `<img src="${d.resimUrl}" class="bakim-resim" />`
+                ${d.gosterimUrl
+                ? `<img src="${d.gosterimUrl}" class="bakim-resim" alt="Bakım fotoğrafı" />`
                 : `<p class="resim-yok">Fotoğraf eklenmemiş.</p>`
             }
                     </div>
@@ -732,4 +777,5 @@ async function bakimDetayGoster(e, bakimId) {
 function bakimDetayKapat() {
     document.getElementById("bakimDetayPopup").classList.add("hidden");
     document.getElementById("bakimDetayIcerik").innerHTML = "";
+    bakimResimUrlTemizle();
 }

@@ -44,7 +44,7 @@ document.getElementById("loginForm").addEventListener("submit", async function (
             mesaj.innerHTML = data || "Kullanıcı adı veya şifre hatalı.";
         }
     } catch (error) {
-        mesaj.innerHTML = "API bağlantı hatası. Backend çalışıyor mu?";
+        mesaj.innerHTML = "Kullanıcı Veya Şifre Hatalı";
         console.error(error);
     }
 });

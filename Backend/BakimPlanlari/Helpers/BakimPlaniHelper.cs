@@ -1,4 +1,4 @@
-﻿using Google.Cloud.Firestore;
+using Google.Cloud.Firestore;
 using IptasPeyzajApi.Backend.BakimPlanlari.Models;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
 using IptasPeyzajApi.Backend.Musteriler.Models;
@@ -10,11 +10,15 @@ public class BakimPlaniHelper
 {
    
     private readonly FirestoreDb _db;
+    private readonly GoogleDriveStorage _driveStorage;
     private const string CollectionName = "bakimPlanlari";
 
-    public BakimPlaniHelper(FirestoreDb db)
+    public BakimPlaniHelper(
+        FirestoreDb db,
+        GoogleDriveStorage driveStorage)
     {
         _db = db;
+        _driveStorage = driveStorage;
     }
 
     public async Task<List<BakimPlani>> TumBakimlariGetir()
@@ -208,9 +212,15 @@ public class BakimPlaniHelper
         if (!doc.Exists)
             return null;
 
-        // 🔥 1. RESİMLERİ KAYDET
-        string oncesiUrl = await ResimKaydet(oncesiResim);
-        string sonrasiUrl = await ResimKaydet(sonrasiResim);
+        string oncesiDriveDosyaId = await ResmiDriveaKaydet(
+            id,
+            "oncesi",
+            oncesiResim);
+
+        string sonrasiDriveDosyaId = await ResmiDriveaKaydet(
+            id,
+            "sonrasi",
+            sonrasiResim);
 
         // 🔥 2. BAKIM GÜNCELLE
         var updateData = new Dictionary<string, object>
@@ -223,104 +233,128 @@ public class BakimPlaniHelper
         await docRef.UpdateAsync(updateData);
 
         // 🔥 3. DETAY KOLEKSİYONA YAZ
-        await BakimDetayEkle(id, personelIdleri, oncesiUrl, sonrasiUrl);
+        await BakimDetayEkle(
+            id,
+            personelIdleri,
+            oncesiDriveDosyaId,
+            sonrasiDriveDosyaId);
 
         return await BakimGetir(id);
     }
 
-    private async Task<string> ResimKaydet(IFormFile? file)
+    private async Task<string> ResmiDriveaKaydet(
+        string bakimId,
+        string resimTipi,
+        IFormFile? file)
     {
         if (file == null || file.Length == 0)
             return string.Empty;
 
-        string uploadsPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "wwwroot",
-            "uploads",
-            "bakimlar"
-        );
+        const long maksimumDosyaBoyutu = 15 * 1024 * 1024;
 
-        if (!Directory.Exists(uploadsPath))
-            Directory.CreateDirectory(uploadsPath);
+        if (file.Length > maksimumDosyaBoyutu)
+            throw new Exception("Resim en fazla 15 MB olabilir.");
 
-        string fileName = $"{Guid.NewGuid()}.jpg";
-        string fullPath = Path.Combine(uploadsPath, fileName);
+        if (string.IsNullOrWhiteSpace(file.ContentType) ||
+            !file.ContentType.StartsWith(
+                "image/",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new Exception("Yalnızca resim dosyası yüklenebilir.");
+        }
 
         using var inputStream = file.OpenReadStream();
-
         using var original = SKBitmap.Decode(inputStream);
 
         if (original == null)
             throw new Exception("Resim okunamadı.");
 
-        // MAX GENİŞLİK
-        int yeniGenislik = 1000;
+        int yeniGenislik = Math.Min(original.Width, 1000);
+        int yeniYukseklik = Math.Max(
+            1,
+            (int)Math.Round(
+                (double)original.Height /
+                original.Width *
+                yeniGenislik));
 
-        int yeniYukseklik =
-            (int)((float)original.Height / original.Width * yeniGenislik);
-
-        using var resized = original.Resize(
-      new SKImageInfo(yeniGenislik, yeniYukseklik),
-      SKSamplingOptions.Default
-  );
+        using SKBitmap? resized =
+            yeniGenislik == original.Width
+                ? original.Copy()
+                : original.Resize(
+                    new SKImageInfo(
+                        yeniGenislik,
+                        yeniYukseklik),
+                    SKSamplingOptions.Default);
 
         if (resized == null)
-            throw new Exception("Resim küçültülemedi.");
+            throw new Exception("Resim hazırlanamadı.");
 
         using var image = SKImage.FromBitmap(resized);
-
         using var data = image.Encode(SKEncodedImageFormat.Jpeg, 65);
 
-        using var stream = File.OpenWrite(fullPath);
+        if (data == null)
+            throw new Exception("Resim JPG biçimine dönüştürülemedi.");
 
-        data.SaveTo(stream);
+        using var outputStream = new MemoryStream();
+        data.SaveTo(outputStream);
+        outputStream.Position = 0;
 
-        return $"/uploads/bakimlar/{fileName}";
+        string dosyaAdi =
+            $"{bakimId}-{resimTipi}-" +
+            $"{DateTime.UtcNow:yyyyMMddHHmmss}-" +
+            $"{Guid.NewGuid():N}.jpg";
+
+        return await _driveStorage.JpegYukleAsync(
+            outputStream,
+            dosyaAdi);
     }
     public async Task BakimDetayEkle(
      string bakimId,
      List<int> personelNolari,
-     string? oncesiUrl,
-     string? sonrasiUrl)
+     string? oncesiDriveDosyaId,
+     string? sonrasiDriveDosyaId)
     {
         foreach (var p in personelNolari)
         {
             // PERSONEL KAYDI HER ZAMAN OLUŞSUN
-            if (string.IsNullOrEmpty(oncesiUrl) &&
-                string.IsNullOrEmpty(sonrasiUrl))
+            if (string.IsNullOrEmpty(oncesiDriveDosyaId) &&
+                string.IsNullOrEmpty(sonrasiDriveDosyaId))
             {
                 await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
                 {
                     BakimId = bakimId,
                     PersonelNo = p,
                     ResimTip = "",
-                    ResimUrl = ""
+                    ResimUrl = "",
+                    DriveDosyaId = ""
                 });
 
                 continue;
             }
 
             // ÖNCESİ
-            if (!string.IsNullOrEmpty(oncesiUrl))
+            if (!string.IsNullOrEmpty(oncesiDriveDosyaId))
             {
                 await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
                 {
                     BakimId = bakimId,
                     PersonelNo = p,
                     ResimTip = "O",
-                    ResimUrl = oncesiUrl
+                    ResimUrl = "",
+                    DriveDosyaId = oncesiDriveDosyaId
                 });
             }
 
             // SONRASI
-            if (!string.IsNullOrEmpty(sonrasiUrl))
+            if (!string.IsNullOrEmpty(sonrasiDriveDosyaId))
             {
                 await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
                 {
                     BakimId = bakimId,
                     PersonelNo = p,
                     ResimTip = "S",
-                    ResimUrl = sonrasiUrl
+                    ResimUrl = "",
+                    DriveDosyaId = sonrasiDriveDosyaId
                 });
             }
         }
@@ -339,11 +373,41 @@ public class BakimPlaniHelper
             {
                 BakimDetay detay = doc.ConvertTo<BakimDetay>();
                 detay.Id = doc.Id;
+                ResimAdresiniHazirla(detay);
                 liste.Add(detay);
             }
         }
 
         return liste;
+    }
+
+    public async Task<BakimDetay?> BakimDetayGetir(
+        string detayId)
+    {
+        DocumentSnapshot doc = await _db
+            .Collection("bakimDetaylari")
+            .Document(detayId)
+            .GetSnapshotAsync();
+
+        if (!doc.Exists)
+            return null;
+
+        BakimDetay detay = doc.ConvertTo<BakimDetay>();
+        detay.Id = doc.Id;
+        ResimAdresiniHazirla(detay);
+
+        return detay;
+    }
+
+    private static void ResimAdresiniHazirla(
+        BakimDetay detay)
+    {
+        if (!string.IsNullOrWhiteSpace(detay.DriveDosyaId) &&
+            !string.IsNullOrWhiteSpace(detay.Id))
+        {
+            detay.ResimUrl =
+                $"/api/BakimPlanlari/detaylar/{detay.Id}/resim";
+        }
     }
     public async Task<(int Guncellenen, int Eslesmeyen)>
     EksikMusteriIdleriniDoldur()

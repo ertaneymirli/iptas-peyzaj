@@ -1,5 +1,29 @@
-﻿async function bakimDetayGoster(e, bakimId) {
+﻿async function bakimResimUrlHazirla(resimUrl) {
+    if (!resimUrl) return "";
+
+    const response = await apiFetch(resimUrl);
+
+    if (!response.ok) {
+        console.error("Bakım resmi alınamadı:", await response.text());
+        return "";
+    }
+
+    const nesneUrl = URL.createObjectURL(await response.blob());
+    window.__bakimResimNesneUrlListesi ??= [];
+    window.__bakimResimNesneUrlListesi.push(nesneUrl);
+    return nesneUrl;
+}
+
+function bakimResimUrlTemizle() {
+    (window.__bakimResimNesneUrlListesi ?? [])
+        .forEach(url => URL.revokeObjectURL(url));
+
+    window.__bakimResimNesneUrlListesi = [];
+}
+
+async function bakimDetayGoster(e, bakimId) {
     e.stopPropagation();
+    bakimResimUrlTemizle();
 
     const bakim = bakimlar.find(x => x.id == bakimId);
 
@@ -15,6 +39,12 @@
 
     const oncesiResim = detaylar.find(x => x.resimTip === "O");
     const sonrasiResim = detaylar.find(x => x.resimTip === "S");
+
+    const [oncesiGosterimUrl, sonrasiGosterimUrl] =
+        await Promise.all([
+            bakimResimUrlHazirla(oncesiResim?.resimUrl),
+            bakimResimUrlHazirla(sonrasiResim?.resimUrl)
+        ]);
 
     const tekilPersoneller = [
         ...new Map(detaylar.map(x => [x.personelNo, x])).values()
@@ -37,16 +67,16 @@
             <div class="bakim-foto-grid">
                 <div>
                     <h4>Öncesi</h4>
-                    ${oncesiResim?.resimUrl
-            ? `<img src="${oncesiResim.resimUrl}" class="bakim-resim" />`
+                    ${oncesiGosterimUrl
+            ? `<img src="${oncesiGosterimUrl}" class="bakim-resim" alt="Bakım öncesi" />`
             : `<p class="resim-yok">Fotoğraf eklenmemiş.</p>`
         }
                 </div>
 
                 <div>
                     <h4>Sonrası</h4>
-                    ${sonrasiResim?.resimUrl
-            ? `<img src="${sonrasiResim.resimUrl}" class="bakim-resim" />`
+                    ${sonrasiGosterimUrl
+            ? `<img src="${sonrasiGosterimUrl}" class="bakim-resim" alt="Bakım sonrası" />`
             : `<p class="resim-yok">Fotoğraf eklenmemiş.</p>`
         }
                 </div>
