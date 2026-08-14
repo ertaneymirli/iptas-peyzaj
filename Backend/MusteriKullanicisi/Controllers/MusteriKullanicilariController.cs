@@ -30,7 +30,7 @@ public class MusteriKullanicilariController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(int id)
     {
         var sonuc = await _musteriKullanicisiHelper
             .BaglantiGetir(id);
@@ -44,7 +44,7 @@ public class MusteriKullanicilariController : ControllerBase
 
     [HttpGet("kullanici/{kullaniciId}")]
     public async Task<IActionResult> GetByKullanici(
-        string kullaniciId)
+        int kullaniciId)
     {
         var sonuc = await _musteriKullanicisiHelper
             .KullaniciyaGoreGetir(kullaniciId);
@@ -54,12 +54,35 @@ public class MusteriKullanicilariController : ControllerBase
 
     [HttpGet("musteri/{musteriId}")]
     public async Task<IActionResult> GetByMusteri(
-        string musteriId)
+        int musteriId)
     {
         var sonuc = await _musteriKullanicisiHelper
             .MusteriyeGoreGetir(musteriId);
 
         return Ok(sonuc);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(
+        int id,
+        [FromBody] MusteriKullanicisi model)
+    {
+        try
+        {
+            var sonuc = await _musteriKullanicisiHelper
+                .BaglantiGuncelle(id, model);
+            return sonuc == null
+                ? NotFound("Müşteri-kullanıcı bağlantısı bulunamadı.")
+                : Ok(sonuc);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpPost]
@@ -84,7 +107,7 @@ public class MusteriKullanicilariController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(int id)
     {
         bool silindiMi = await _musteriKullanicisiHelper
             .BaglantiSil(id);
@@ -100,8 +123,8 @@ public class MusteriKullanicilariController : ControllerBase
     [HttpDelete(
         "kullanici/{kullaniciId}/musteri/{musteriId}")]
     public async Task<IActionResult> DeleteByKullaniciMusteri(
-        string kullaniciId,
-        string musteriId)
+        int kullaniciId,
+        int musteriId)
     {
         bool silindiMi = await _musteriKullanicisiHelper
             .KullaniciMusteriBaglantisiSil(

@@ -31,7 +31,7 @@ async function pasifMusterileriGetir() {
 function satirAktifEt(e, id) {
     e.stopPropagation();
 
-    const musteri = musteriler.find(x => x.id === id);
+    const musteri = musteriler.find(x => String(x.id) === String(id));
     seciliMusteri = musteri;
 
     musteriAktifEt();
@@ -176,7 +176,7 @@ function tarihSet(id, value) {
 function satirDuzenle(e, id) {
     e.stopPropagation();
 
-    const musteri = musteriler.find(x => x.id === id);
+    const musteri = musteriler.find(x => String(x.id) === String(id));
     seciliMusteri = musteri;
 
     musteriDegistir();
@@ -185,7 +185,7 @@ function satirDuzenle(e, id) {
 function satirSil(e, id) {
     e.stopPropagation();
 
-    const musteri = musteriler.find(x => x.id === id);
+    const musteri = musteriler.find(x => String(x.id) === String(id));
     seciliMusteri = musteri;
 
     musteriSil();

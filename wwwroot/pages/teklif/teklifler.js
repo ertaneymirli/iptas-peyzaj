@@ -203,6 +203,7 @@ document.addEventListener("submit", async function (e) {
         }
 
         const teklif = {
+            musteriId: Number(musteri.id),
             musteriNo: musteri.musteriNo,
             adSoyad: `${musteri.ad} ${musteri.soyad}`,
             telefon: musteri.telefon ?? "",

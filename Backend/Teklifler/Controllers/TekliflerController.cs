@@ -25,7 +25,7 @@ public class TekliflerController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(int id)
     {
         var teklif = await _helper.TeklifGetir(id);
 
@@ -43,7 +43,7 @@ public class TekliflerController : ControllerBase
     }
 
     [HttpPut("{id}/durum")]
-    public async Task<IActionResult> DurumGuncelle(string id, [FromBody] TeklifDurumDto dto)
+    public async Task<IActionResult> DurumGuncelle(int id, [FromBody] TeklifDurumDto dto)
     {
         var sonuc = await _helper.DurumGuncelle(id, dto.DurumKodu, dto.IslemNotu);
 
@@ -54,7 +54,7 @@ public class TekliflerController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(int id)
     {
         var sonuc = await _helper.TeklifSil(id);
 
@@ -64,7 +64,7 @@ public class TekliflerController : ControllerBase
         return Ok(sonuc);
     }
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, [FromBody] Teklif teklif)
+    public async Task<IActionResult> Update(int id, [FromBody] Teklif teklif)
     {
         var sonuc = await _helper.TeklifGuncelle(id, teklif);
 

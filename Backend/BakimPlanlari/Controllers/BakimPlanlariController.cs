@@ -4,7 +4,6 @@ using IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
 using IptasPeyzajApi.Backend.BakimPlanlari.Models;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
 using IptasPeyzajApi.Backend.MusteriKullanicilari.Helpers;
-using IptasPeyzajApi.Backend.Personeller.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +16,6 @@ public class BakimPlanlariController : ControllerBase
 {
     private readonly MusteriHelper _musteriHelper;
     private readonly BakimPlaniHelper _helper;
-    private readonly PersonelHelper _personelHelper;
     private readonly GoogleDriveStorage _driveStorage;
     private readonly MusteriKullanicisiHelper
         _musteriKullanicisiHelper;
@@ -25,13 +23,11 @@ public class BakimPlanlariController : ControllerBase
     public BakimPlanlariController(
         BakimPlaniHelper helper,
         MusteriHelper musteriHelper,
-        PersonelHelper personelHelper,
         MusteriKullanicisiHelper musteriKullanicisiHelper,
         GoogleDriveStorage driveStorage)
     {
         _helper = helper;
         _musteriHelper = musteriHelper;
-        _personelHelper = personelHelper;
         _musteriKullanicisiHelper =
             musteriKullanicisiHelper;
         _driveStorage = driveStorage;
@@ -42,34 +38,31 @@ public class BakimPlanlariController : ControllerBase
         return User.IsInRole("1");
     }
 
-    private string? KullaniciIdGetir()
+    private int? KullaniciIdGetir()
     {
-        return User.FindFirstValue("id");
+        return int.TryParse(User.FindFirstValue("id"), out int id)
+            ? id
+            : null;
     }
 
-    private async Task<HashSet<string>>
+    private async Task<HashSet<int>>
         YetkiliMusteriIdleriniGetir()
     {
-        string? kullaniciId =
+        int? kullaniciId =
             KullaniciIdGetir();
 
-        if (string.IsNullOrWhiteSpace(kullaniciId))
+        if (!kullaniciId.HasValue)
         {
-            return new HashSet<string>();
+            return new HashSet<int>();
         }
 
         var baglantilar =
             await _musteriKullanicisiHelper
-                .KullaniciyaGoreGetir(kullaniciId);
+                .KullaniciyaGoreGetir(kullaniciId.Value);
 
         return baglantilar
-            .Where(x =>
-                !string.IsNullOrWhiteSpace(
-                    x.MusteriId
-                )
-            )
             .Select(x => x.MusteriId)
-            .ToHashSet(StringComparer.Ordinal);
+            .ToHashSet();
     }
 
     private async Task<List<BakimPlani>>
@@ -81,18 +74,11 @@ public class BakimPlanlariController : ControllerBase
             return bakimlar;
         }
 
-        HashSet<string> musteriIdleri =
+        HashSet<int> musteriIdleri =
             await YetkiliMusteriIdleriniGetir();
 
         return bakimlar
-            .Where(x =>
-                !string.IsNullOrWhiteSpace(
-                    x.MusteriId
-                ) &&
-                musteriIdleri.Contains(
-                    x.MusteriId
-                )
-            )
+            .Where(x => musteriIdleri.Contains(x.MusteriId))
             .ToList();
     }
 
@@ -104,13 +90,12 @@ public class BakimPlanlariController : ControllerBase
             return true;
         }
 
-        if (string.IsNullOrWhiteSpace(
-            bakim.MusteriId))
+        if (bakim.MusteriId <= 0)
         {
             return false;
         }
 
-        HashSet<string> musteriIdleri =
+        HashSet<int> musteriIdleri =
             await YetkiliMusteriIdleriniGetir();
 
         return musteriIdleri.Contains(
@@ -125,26 +110,10 @@ public class BakimPlanlariController : ControllerBase
             await _musteriHelper
                 .TumMusterileriGetir();
 
-        var musteriIdMap = musteriler
-            .Where(x =>
-                !string.IsNullOrWhiteSpace(x.Id))
-            .ToDictionary(
-                x => x.Id!,
-                x => x,
-                StringComparer.Ordinal
-            );
+        var musteriIdMap = musteriler.ToDictionary(x => x.Id, x => x);
 
         foreach (BakimPlani bakim in bakimlar)
         {
-            if (
-                string.IsNullOrWhiteSpace(
-                    bakim.MusteriId
-                )
-            )
-            {
-                continue;
-            }
-
             if (
                 musteriIdMap.TryGetValue(
                     bakim.MusteriId,
@@ -169,9 +138,7 @@ public class BakimPlanlariController : ControllerBase
     {
         if (
             !AdminMi() &&
-            string.IsNullOrWhiteSpace(
-                KullaniciIdGetir()
-            )
+            !KullaniciIdGetir().HasValue
         )
         {
             return Unauthorized(
@@ -200,9 +167,7 @@ public class BakimPlanlariController : ControllerBase
     {
         if (
             !AdminMi() &&
-            string.IsNullOrWhiteSpace(
-                KullaniciIdGetir()
-            )
+            !KullaniciIdGetir().HasValue
         )
         {
             return Unauthorized(
@@ -229,7 +194,7 @@ public class BakimPlanlariController : ControllerBase
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(
-        string id)
+        int id)
     {
         BakimPlani? bakim =
             await _helper.BakimGetir(id);
@@ -270,7 +235,7 @@ public class BakimPlanlariController : ControllerBase
     [Authorize(Roles = "1")]
     [HttpPut("{id}/durum")]
     public async Task<IActionResult> DurumGuncelle(
-        string id,
+        int id,
         [FromBody] BakimDurumDto dto)
     {
         var sonuc =
@@ -293,7 +258,7 @@ public class BakimPlanlariController : ControllerBase
     [Authorize(Roles = "1")]
     [HttpPut("{id}/ertele")]
     public async Task<IActionResult> Ertele(
-        string id,
+        int id,
         [FromBody] BakimErteleDto dto)
     {
         var sonuc = await _helper.Ertele(
@@ -316,7 +281,7 @@ public class BakimPlanlariController : ControllerBase
     [HttpPut("{id}/tamamla")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> Tamamla(
-      string id,
+      int id,
       [FromForm] BakimTamamlaDto dto)
     {
         var personelMetinleri =
@@ -362,7 +327,7 @@ public class BakimPlanlariController : ControllerBase
 
     [HttpGet("{id}/detaylar")]
     public async Task<IActionResult> Detaylar(
-        string id)
+        int id)
     {
         BakimPlani? bakim =
             await _helper.BakimGetir(id);
@@ -383,32 +348,12 @@ public class BakimPlanlariController : ControllerBase
             await _helper
                 .BakimDetaylariGetir(id);
 
-        var personeller =
-            await _personelHelper
-                .TumPersonelleriGetir();
-
-        foreach (var detay in detaylar)
-        {
-            var personel =
-                personeller.FirstOrDefault(
-                    x =>
-                        x.Id ==
-                        detay.PersonelNo
-                );
-
-            if (personel != null)
-            {
-                detay.AdSoyad =
-                    $"{personel.Ad} {personel.Soyad}";
-            }
-        }
-
         return Ok(detaylar);
     }
 
     [HttpGet("detaylar/{detayId}/resim")]
     public async Task<IActionResult> DetayResmi(
-        string detayId,
+        int detayId,
         CancellationToken cancellationToken)
     {
         BakimDetay? detay =
@@ -458,7 +403,7 @@ public class BakimPlanlariController : ControllerBase
     {
         if (
             !AdminMi() &&
-            string.IsNullOrWhiteSpace(KullaniciIdGetir())
+            !KullaniciIdGetir().HasValue
         )
         {
             return Unauthorized(
@@ -474,21 +419,15 @@ public class BakimPlanlariController : ControllerBase
 
         if (!AdminMi())
         {
-            HashSet<string> yetkiliMusteriIdleri =
+            HashSet<int> yetkiliMusteriIdleri =
                 await YetkiliMusteriIdleriniGetir();
 
             musteriler = musteriler
-                .Where(x =>
-                    !string.IsNullOrWhiteSpace(x.Id) &&
-                    yetkiliMusteriIdleri.Contains(x.Id)
-                )
+                .Where(x => yetkiliMusteriIdleri.Contains(x.Id))
                 .ToList();
 
             bakimlar = bakimlar
-                .Where(x =>
-                    !string.IsNullOrWhiteSpace(x.MusteriId) &&
-                    yetkiliMusteriIdleri.Contains(x.MusteriId)
-                )
+                .Where(x => yetkiliMusteriIdleri.Contains(x.MusteriId))
                 .ToList();
         }
 
@@ -498,24 +437,6 @@ public class BakimPlanlariController : ControllerBase
         {
             musteriler,
             bakimlar
-        });
-    }
-    [Authorize(Roles = "1")]
-    [HttpPut("eksik-musteri-idlerini-doldur")]
-    public async Task<IActionResult>
-    EksikMusteriIdleriniDoldur()
-    {
-        var sonuc =
-            await _helper
-                .EksikMusteriIdleriniDoldur();
-
-        return Ok(new
-        {
-            guncellenenKayitSayisi =
-                sonuc.Guncellenen,
-
-            eslesmeyenKayitSayisi =
-                sonuc.Eslesmeyen
         });
     }
 }

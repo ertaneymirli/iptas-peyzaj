@@ -1,144 +1,110 @@
-﻿using Google.Cloud.Firestore;
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.Data.Entities;
 using IptasPeyzajApi.Backend.MusteriKullanicilari.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace IptasPeyzajApi.Backend.MusteriKullanicilari.Helpers;
 
 public class MusteriKullanicisiHelper
 {
-    private const string KoleksiyonAdi =
-        "musteriKullanicilari";
+    private readonly IptasPeyzajDbContext _db;
 
-    private readonly FirestoreDb _firestoreDb;
+    public MusteriKullanicisiHelper(IptasPeyzajDbContext db) => _db = db;
 
-    public MusteriKullanicisiHelper(
-        FirestoreDb firestoreDb)
+    public async Task<List<MusteriKullanicisi>> TumBaglantilariGetir()
     {
-        _firestoreDb = firestoreDb;
+        List<MusteriKullaniciEntity> entities = await _db.MusteriKullanicilari
+            .AsNoTracking().OrderBy(x => x.Id).ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<List<MusteriKullanicisi>>
-        TumBaglantilariGetir()
+    public async Task<MusteriKullanicisi?> BaglantiGetir(int id)
     {
-        QuerySnapshot snapshot = await _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .GetSnapshotAsync();
-
-        return snapshot.Documents
-            .Select(BelgedenModeleCevir)
-            .ToList();
+        MusteriKullaniciEntity? entity = await _db.MusteriKullanicilari
+            .AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : ModeleCevir(entity);
     }
 
-    public async Task<MusteriKullanicisi?>
-        BaglantiGetir(string id)
+    public async Task<List<MusteriKullanicisi>> KullaniciyaGoreGetir(int kullaniciId)
     {
-        DocumentSnapshot snapshot = await _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .Document(id)
-            .GetSnapshotAsync();
-
-        if (!snapshot.Exists)
-            return null;
-
-        return BelgedenModeleCevir(snapshot);
+        List<MusteriKullaniciEntity> entities = await _db.MusteriKullanicilari
+            .AsNoTracking().Where(x => x.KullaniciId == kullaniciId).ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<List<MusteriKullanicisi>>
-        KullaniciyaGoreGetir(string kullaniciId)
+    public async Task<List<MusteriKullanicisi>> MusteriyeGoreGetir(int musteriId)
     {
-        QuerySnapshot snapshot = await _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .WhereEqualTo(
-                nameof(MusteriKullanicisi.KullaniciId),
-                kullaniciId)
-            .GetSnapshotAsync();
-
-        return snapshot.Documents
-            .Select(BelgedenModeleCevir)
-            .ToList();
+        List<MusteriKullaniciEntity> entities = await _db.MusteriKullanicilari
+            .AsNoTracking().Where(x => x.MusteriId == musteriId).ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<List<MusteriKullanicisi>>
-        MusteriyeGoreGetir(string musteriId)
+    public async Task<MusteriKullanicisi> BaglantiEkle(MusteriKullanicisi model)
     {
-        QuerySnapshot snapshot = await _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .WhereEqualTo(
-                nameof(MusteriKullanicisi.MusteriId),
-                musteriId)
-            .GetSnapshotAsync();
+        await BaglantiDogrula(model.KullaniciId, model.MusteriId, null);
 
-        return snapshot.Documents
-            .Select(BelgedenModeleCevir)
-            .ToList();
+        MusteriKullaniciEntity entity = new()
+        {
+            KullaniciId = model.KullaniciId,
+            MusteriId = model.MusteriId
+        };
+        _db.MusteriKullanicilari.Add(entity);
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<MusteriKullanicisi>
-        BaglantiEkle(MusteriKullanicisi model)
+    public async Task<MusteriKullanicisi?> BaglantiGuncelle(
+        int id, MusteriKullanicisi model)
     {
-        if (string.IsNullOrWhiteSpace(model.KullaniciId))
-            throw new ArgumentException(
-                "Kullanıcı ID boş olamaz.");
+        MusteriKullaniciEntity? entity = await _db.MusteriKullanicilari.FindAsync(id);
+        if (entity == null) return null;
 
-        if (string.IsNullOrWhiteSpace(model.MusteriId))
-            throw new ArgumentException(
-                "Müşteri ID boş olamaz.");
-
-        string belgeId =
-            $"{model.KullaniciId}_{model.MusteriId}";
-
-        DocumentReference belge = _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .Document(belgeId);
-
-        DocumentSnapshot mevcut =
-            await belge.GetSnapshotAsync();
-
-        if (mevcut.Exists)
-            throw new InvalidOperationException(
-                "Bu kullanıcı ile müşteri zaten eşleştirilmiş.");
-
-        model.Id = belgeId;
-
-        await belge.SetAsync(model);
-
-        return model;
+        await BaglantiDogrula(model.KullaniciId, model.MusteriId, id);
+        entity.KullaniciId = model.KullaniciId;
+        entity.MusteriId = model.MusteriId;
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<bool> BaglantiSil(string id)
+    public async Task<bool> BaglantiSil(int id)
     {
-        DocumentReference belge = _firestoreDb
-            .Collection(KoleksiyonAdi)
-            .Document(id);
-
-        DocumentSnapshot snapshot =
-            await belge.GetSnapshotAsync();
-
-        if (!snapshot.Exists)
-            return false;
-
-        await belge.DeleteAsync();
-
+        MusteriKullaniciEntity? entity = await _db.MusteriKullanicilari.FindAsync(id);
+        if (entity == null) return false;
+        _db.MusteriKullanicilari.Remove(entity);
+        await _db.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> KullaniciMusteriBaglantisiSil(
-        string kullaniciId,
-        string musteriId)
+    public async Task<bool> KullaniciMusteriBaglantisiSil(int kullaniciId, int musteriId)
     {
-        string belgeId =
-            $"{kullaniciId}_{musteriId}";
-
-        return await BaglantiSil(belgeId);
+        MusteriKullaniciEntity? entity = await _db.MusteriKullanicilari
+            .FirstOrDefaultAsync(x => x.KullaniciId == kullaniciId && x.MusteriId == musteriId);
+        if (entity == null) return false;
+        _db.MusteriKullanicilari.Remove(entity);
+        await _db.SaveChangesAsync();
+        return true;
     }
 
-    private static MusteriKullanicisi
-        BelgedenModeleCevir(DocumentSnapshot belge)
+    private async Task BaglantiDogrula(int kullaniciId, int musteriId, int? haricId)
     {
-        MusteriKullanicisi model =
-            belge.ConvertTo<MusteriKullanicisi>();
+        if (kullaniciId <= 0) throw new ArgumentException("Kullanıcı ID geçersiz.");
+        if (musteriId <= 0) throw new ArgumentException("Müşteri ID geçersiz.");
+        if (!await _db.Kullanicilar.AnyAsync(x => x.Id == kullaniciId))
+            throw new ArgumentException("Kullanıcı bulunamadı.");
+        if (!await _db.Musteriler.AnyAsync(x => x.Id == musteriId))
+            throw new ArgumentException("Müşteri bulunamadı.");
 
-        model.Id = belge.Id;
-
-        return model;
+        bool varMi = await _db.MusteriKullanicilari.AnyAsync(x =>
+            x.KullaniciId == kullaniciId && x.MusteriId == musteriId &&
+            (!haricId.HasValue || x.Id != haricId.Value));
+        if (varMi)
+            throw new InvalidOperationException("Bu kullanıcı ile müşteri zaten eşleştirilmiş.");
     }
+
+    private static MusteriKullanicisi ModeleCevir(MusteriKullaniciEntity x) => new()
+    {
+        Id = x.Id,
+        KullaniciId = x.KullaniciId,
+        MusteriId = x.MusteriId
+    };
 }

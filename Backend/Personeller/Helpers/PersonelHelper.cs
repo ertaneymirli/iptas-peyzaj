@@ -1,128 +1,102 @@
-﻿using Google.Cloud.Firestore;
-
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace IptasPeyzajApi.Backend.Personeller.Helpers;
 
 public class PersonelHelper
 {
-    private readonly FirestoreDb _db;
-    private const string CollectionName = "Personeller";
+    private readonly IptasPeyzajDbContext _db;
 
-    public PersonelHelper(FirestoreDb db)
-    {
-        _db = db;
-    }
+    public PersonelHelper(IptasPeyzajDbContext db) => _db = db;
 
     public async Task<List<Personel>> TumPersonelleriGetir()
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .OrderBy("PersonelNo")
-            .GetSnapshotAsync();
+        List<PersonelEntity> entities = await _db.Personeller.AsNoTracking()
+            .Where(x => x.DurumKodu != "P")
+            .OrderBy(x => x.PersonelNo)
+            .ToListAsync();
 
-        List<Personel> liste = new();
-
-        foreach (DocumentSnapshot doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                Personel personel = doc.ConvertTo<Personel>();
-                personel.DocId = doc.Id;
-                if (personel.DurumKodu != "P")
-                {
-                    liste.Add(personel);
-                }
-            }
-        }
-
-        return liste;
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<Personel?> PersonelGetir(string docId)
+    public async Task<Personel?> PersonelGetir(int id)
     {
-        DocumentSnapshot doc = await _db.Collection(CollectionName)
-            .Document(docId)
-            .GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        Personel personel = doc.ConvertTo<Personel>();
-        personel.DocId = doc.Id;
-
-        return personel;
+        PersonelEntity? entity = await _db.Personeller.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : ModeleCevir(entity);
     }
+
     public async Task<Personel> PersonelEkle(Personel personel)
     {
-        personel.KayitTarihi = DateTime.UtcNow;
-        personel.DurumKodu = "A";
+        int yeniNo = personel.PersonelNo > 0
+            ? personel.PersonelNo
+            : (await _db.Personeller.MaxAsync(x => (int?)x.PersonelNo) ?? 0) + 1;
 
-        DocumentReference addedDoc =
-            await _db.Collection(CollectionName).AddAsync(personel);
+        PersonelEntity entity = new()
+        {
+            PersonelNo = yeniNo,
+            EskiPersonelId = 0,
+            Ad = personel.Ad?.Trim() ?? string.Empty,
+            Soyad = personel.Soyad?.Trim() ?? string.Empty,
+            Telefon = personel.Telefon?.Trim() ?? string.Empty,
+            Gorev = personel.Gorev?.Trim() ?? string.Empty,
+            DurumKodu = "A",
+            KayitTarihi = DateTime.UtcNow
+        };
 
-        personel.DocId = addedDoc.Id;
-
-        return personel;
+        _db.Personeller.Add(entity);
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<Personel?> PersonelGuncelle(string docId, Personel personel)
+    public async Task<Personel?> PersonelGuncelle(int id, Personel personel)
     {
-        DocumentReference docRef =
-            _db.Collection(CollectionName).Document(docId);
+        PersonelEntity? entity = await _db.Personeller.FindAsync(id);
+        if (entity == null) return null;
 
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
+        entity.PersonelNo = personel.PersonelNo > 0 ? personel.PersonelNo : entity.PersonelNo;
+        entity.Ad = personel.Ad?.Trim() ?? string.Empty;
+        entity.Soyad = personel.Soyad?.Trim() ?? string.Empty;
+        entity.Telefon = personel.Telefon?.Trim() ?? string.Empty;
+        entity.Gorev = personel.Gorev?.Trim() ?? string.Empty;
 
-        if (!doc.Exists)
-            return null;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-    {
-        { "Id", personel.Id },
-        { "PersonelNo", personel.PersonelNo },
-        { "Ad", personel.Ad ?? string.Empty },
-        { "Soyad", personel.Soyad ?? string.Empty },
-        { "Telefon", personel.Telefon ?? string.Empty },
-        { "Gorev", personel.Gorev ?? string.Empty }
-    });
-
-        return await PersonelGetir(docId);
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<Personel?> DurumGuncelle(string docId, string durumKodu)
+    public async Task<Personel?> DurumGuncelle(int id, string durumKodu)
     {
-        DocumentReference docRef =
-            _db.Collection(CollectionName).Document(docId);
+        PersonelEntity? entity = await _db.Personeller.FindAsync(id);
+        if (entity == null) return null;
 
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-    {
-        { "DurumKodu", durumKodu }
-    });
-
-        return await PersonelGetir(docId);
+        entity.DurumKodu = string.IsNullOrWhiteSpace(durumKodu)
+            ? entity.DurumKodu
+            : durumKodu.Trim().ToUpperInvariant();
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
     public async Task<List<Personel>> DurumaGoreGetir(string durumKodu)
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .WhereEqualTo("DurumKodu", durumKodu)
-            .GetSnapshotAsync();
+        string durum = durumKodu.Trim().ToUpperInvariant();
+        List<PersonelEntity> entities = await _db.Personeller.AsNoTracking()
+            .Where(x => x.DurumKodu == durum)
+            .OrderBy(x => x.PersonelNo)
+            .ToListAsync();
 
-        List<Personel> liste = new();
-
-        foreach (DocumentSnapshot doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                Personel personel = doc.ConvertTo<Personel>();
-                personel.DocId = doc.Id;
-                liste.Add(personel);
-            }
-        }
-
-        return liste.OrderBy(x => x.PersonelNo).ToList();
+        return entities.Select(ModeleCevir).ToList();
     }
+
+    private static Personel ModeleCevir(PersonelEntity x) => new()
+    {
+        Id = x.Id,
+        PersonelNo = x.PersonelNo,
+        Ad = x.Ad,
+        Soyad = x.Soyad,
+        Telefon = x.Telefon,
+        Gorev = x.Gorev,
+        DurumKodu = x.DurumKodu,
+        KayitTarihi = x.KayitTarihi
+    };
 }

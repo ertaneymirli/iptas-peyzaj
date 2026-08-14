@@ -49,11 +49,11 @@ function personelleriTabloyaBas(liste) {
         tr.innerHTML = `
             <td>
                 <div class="personel-actions">
-                    <button class="btn-edit" onclick="personelDuzenle('${p.docId}')">✏️</button>
+                    <button class="btn-edit" onclick="personelDuzenle(${p.id})">✏️</button>
 
                     ${isPasif
-                ? `<button class="btn-active" onclick="personelDurumGuncelle('${p.docId}', 'A')">Aktif Et</button>`
-                : `<button class="btn-delete" onclick="personelDurumGuncelle('${p.docId}', 'P')">Pasif Yap</button>`
+                ? `<button class="btn-active" onclick="personelDurumGuncelle(${p.id}, 'A')">Aktif Et</button>`
+                : `<button class="btn-delete" onclick="personelDurumGuncelle(${p.id}, 'P')">Pasif Yap</button>`
             }
                 </div>
             </td>
@@ -97,7 +97,13 @@ function personelPopupKapat() {
     document.getElementById("personelForm").reset();
 }
 
-async function personelDuzenle(docId) {
+async function personelDuzenle(id) {
+    const personel = personelListesi.find(x => Number(x.id) === Number(id));
+    if (!personel) {
+        alert("Personel bulunamadı.");
+        return;
+    }
+
     const response = await apiFetch(
         "/pages/personeller/personel-ekle.html"
     );
@@ -107,16 +113,24 @@ async function personelDuzenle(docId) {
     document.getElementById(
         "personelPopupIcerik"
     ).innerHTML = html;
+
+    document.getElementById("personelPopupBaslik").textContent = "Personel Düzenle";
+    document.getElementById("personelPopup").classList.remove("hidden");
+    document.getElementById("personelDocId").value = personel.id;
+    document.getElementById("personelNo").value = personel.personelNo ?? "";
+    document.getElementById("personelAd").value = personel.ad ?? "";
+    document.getElementById("personelSoyad").value = personel.soyad ?? "";
+    document.getElementById("personelTelefon").value = personel.telefon ?? "";
+    document.getElementById("personelGorev").value = personel.gorev ?? "";
 }
 
 document.addEventListener("submit", async function (e) {
     if (e.target && e.target.id === "personelForm") {
         e.preventDefault();
 
-        const docId = document.getElementById("personelDocId").value;
+        const id = Number(document.getElementById("personelDocId").value);
 
         const personel = {
-            id: Number(document.getElementById("personelId").value),
             personelNo: Number(document.getElementById("personelNo").value),
             ad: document.getElementById("personelAd").value.trim(),
             soyad: document.getElementById("personelSoyad").value.trim(),
@@ -124,11 +138,11 @@ document.addEventListener("submit", async function (e) {
             gorev: document.getElementById("personelGorev").value.trim()
         };
 
-        const url = docId
-            ? `/api/Personeller/${docId}`
+        const url = id
+            ? `/api/Personeller/${id}`
             : "/api/Personeller";
 
-        const method = docId ? "PUT" : "POST";
+        const method = id ? "PUT" : "POST";
 
         const response = await apiFetch(url, {
             method,
@@ -148,7 +162,7 @@ document.addEventListener("submit", async function (e) {
     }
 });
 
-async function personelDurumGuncelle(docId, durumKodu) {
+async function personelDurumGuncelle(id, durumKodu) {
 
     const mesaj =
         durumKodu === "P"
@@ -159,7 +173,7 @@ async function personelDurumGuncelle(docId, durumKodu) {
         return;
 
     const response = await apiFetch(
-        `/api/Personeller/${docId}/durum`,
+        `/api/Personeller/${id}/durum`,
         {
             method: "PUT",
             headers: {

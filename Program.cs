@@ -1,4 +1,3 @@
-using Google.Cloud.Firestore;
 using IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
 using IptasPeyzajApi.Backend.Kullanicilar.Helpers;
 using IptasPeyzajApi.Backend.Musteriler.Helpers;
@@ -9,7 +8,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using IptasPeyzajApi.Backend.Data;
-using IptasPeyzajApi.Backend.VeriAktarimi;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -25,7 +23,6 @@ builder.Services.AddDbContext<IptasPeyzajDbContext>(options =>
         azureSqlConnection,
         sql => sql.EnableRetryOnFailure()));
 
-builder.Services.AddScoped<FirestoreToSqlMigrationService>();
 builder.Services.AddScoped<MusteriHelper>();
 builder.Services.AddScoped<BakimPlaniHelper>();
 builder.Services.AddScoped<PersonelHelper>();
@@ -34,12 +31,9 @@ builder.Services.AddScoped<KullaniciHelper>();
 builder.Services.AddScoped<MusteriKullanicisiHelper>();
 builder.Services.AddSingleton<GoogleDriveStorage>();
 builder.Services.AddControllers();
-builder.Services.AddScoped<
-    MusteriKullanicisiHelper
->();
 var jwtKey = builder.Configuration["JWT_KEY"]
     ?? Environment.GetEnvironmentVariable("JWT_KEY")
-    ?? "iptas-peyzaj-cok-gizli-anahtar-2026";
+    ?? throw new InvalidOperationException("JWT_KEY ayarı bulunamadı.");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -67,31 +61,6 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
-
-string projectId = builder.Configuration["Firebase:ProjectId"] ?? "iptaspeyzaj";
-
-// GOOGLE_APPLICATION_CREDENTIALS ortam değişkeni ile service account json dosyasını göstereceksin.
-// Örnek: setx GOOGLE_APPLICATION_CREDENTIALS "C:\\firebase\\serviceAccountKey.json"
-string firebaseKeyPath;
-
-if (File.Exists("/etc/secrets/firebase-key.json"))
-{
-    firebaseKeyPath = "/etc/secrets/firebase-key.json";
-}
-else
-{
-    firebaseKeyPath = Path.Combine(
-        builder.Environment.ContentRootPath,
-        "firebase-key.json"
-    );
-}
-
-Environment.SetEnvironmentVariable(
-    "GOOGLE_APPLICATION_CREDENTIALS",
-    firebaseKeyPath
-);
-builder.Services.AddSingleton(_ => FirestoreDb.Create("iptaspeyzaj"));
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

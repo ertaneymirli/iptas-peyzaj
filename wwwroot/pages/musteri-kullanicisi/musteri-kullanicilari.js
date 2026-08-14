@@ -124,9 +124,9 @@ function musteriKullaniciBaglantilariniBirlestir() {
                     "Id"
                 ),
 
-                kullaniciId: kullaniciId,
+                kullaniciId: Number(kullaniciId),
 
-                musteriId: musteriId,
+                musteriId: Number(musteriId),
 
                 kullaniciAdSoyad: kullanici
                     ? mkAdSoyad(kullanici)

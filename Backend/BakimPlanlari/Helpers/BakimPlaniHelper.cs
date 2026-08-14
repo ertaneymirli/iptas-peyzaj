@@ -1,21 +1,18 @@
-using Google.Cloud.Firestore;
 using IptasPeyzajApi.Backend.BakimPlanlari.Models;
-using IptasPeyzajApi.Backend.Musteriler.Helpers;
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.Data.Entities;
 using IptasPeyzajApi.Backend.Musteriler.Models;
+using Microsoft.EntityFrameworkCore;
 using SkiaSharp;
 
 namespace IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
 
 public class BakimPlaniHelper
 {
-   
-    private readonly FirestoreDb _db;
+    private readonly IptasPeyzajDbContext _db;
     private readonly GoogleDriveStorage _driveStorage;
-    private const string CollectionName = "bakimPlanlari";
 
-    public BakimPlaniHelper(
-        FirestoreDb db,
-        GoogleDriveStorage driveStorage)
+    public BakimPlaniHelper(IptasPeyzajDbContext db, GoogleDriveStorage driveStorage)
     {
         _db = db;
         _driveStorage = driveStorage;
@@ -23,460 +20,289 @@ public class BakimPlaniHelper
 
     public async Task<List<BakimPlani>> TumBakimlariGetir()
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .OrderBy("BakimTarihi")
-            .GetSnapshotAsync();
-
-        List<BakimPlani> liste = new();
-
-        foreach (DocumentSnapshot doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                BakimPlani item = doc.ConvertTo<BakimPlani>();
-                item.Id = doc.Id;
-                liste.Add(item);
-            }
-        }
-       
-        return liste;
+        List<BakimPlaniEntity> entities = await _db.BakimPlanlari.AsNoTracking()
+            .Include(x => x.Personeller)
+            .OrderBy(x => x.BakimTarihi)
+            .ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
     public async Task<List<BakimPlani>> DurumaGoreGetir(string durumKodu)
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .WhereEqualTo("DurumKodu", durumKodu)
-            .OrderBy("BakimTarihi")
-            .GetSnapshotAsync();
-
-        return SnapshotToList(snapshot);
+        string durum = durumKodu.Trim().ToUpperInvariant();
+        List<BakimPlaniEntity> entities = await _db.BakimPlanlari.AsNoTracking()
+            .Include(x => x.Personeller)
+            .Where(x => x.DurumKodu == durum)
+            .OrderBy(x => x.BakimTarihi)
+            .ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<BakimPlani?> BakimGetir(string id)
+    public async Task<BakimPlani?> BakimGetir(int id)
     {
-        DocumentSnapshot doc = await _db.Collection(CollectionName)
-            .Document(id)
-            .GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        BakimPlani item = doc.ConvertTo<BakimPlani>();
-        item.Id = doc.Id;
-
-        return item;
+        BakimPlaniEntity? entity = await _db.BakimPlanlari.AsNoTracking()
+            .Include(x => x.Personeller)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : ModeleCevir(entity);
     }
 
     public async Task<BakimPlani> BakimEkle(BakimPlani bakim)
     {
-        bakim.KayitTarihi = DateTime.UtcNow;
-        bakim.BakimTarihi = UtcYap(bakim.BakimTarihi);
+        MusteriEntity? musteri = await _db.Musteriler.FindAsync(bakim.MusteriId);
+        if (musteri == null) throw new ArgumentException("Müşteri bulunamadı.");
 
-        DocumentReference addedDoc = await _db.Collection(CollectionName).AddAsync(bakim);
-        bakim.Id = addedDoc.Id;
-
-        return bakim;
+        BakimPlaniEntity entity = YeniBakimEntity(musteri, UtcYap(bakim.BakimTarihi));
+        entity.Aciklama = bakim.Aciklama ?? string.Empty;
+        _db.BakimPlanlari.Add(entity);
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<BakimPlani?> DurumGuncelle(string id, string durumKodu, string islemNotu)
+    public async Task<BakimPlani?> DurumGuncelle(int id, string durumKodu, string islemNotu)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-        {
-            { "DurumKodu", durumKodu },
-            { "IslemTarihi", DateTime.UtcNow },
-            { "IslemNotu", islemNotu ?? string.Empty }
-        });
-
-        return await BakimGetir(id);
+        BakimPlaniEntity? entity = await _db.BakimPlanlari.FindAsync(id);
+        if (entity == null) return null;
+        entity.DurumKodu = durumKodu.Trim().ToUpperInvariant();
+        entity.IslemTarihi = DateTime.UtcNow;
+        entity.IslemNotu = islemNotu ?? string.Empty;
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<BakimPlani?> Ertele(string id, DateTime yeniTarih, string islemNotu)
+    public async Task<BakimPlani?> Ertele(int id, DateTime yeniTarih, string islemNotu)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-        {
-            { "DurumKodu", "E" },
-            { "BakimTarihi", UtcYap(yeniTarih) },
-            { "IslemTarihi", DateTime.UtcNow },
-            { "IslemNotu", islemNotu ?? "Bakım ertelendi." }
-        });
-
-        return await BakimGetir(id);
+        BakimPlaniEntity? entity = await _db.BakimPlanlari.FindAsync(id);
+        if (entity == null) return null;
+        entity.DurumKodu = "E";
+        entity.BakimTarihi = UtcYap(yeniTarih);
+        entity.IslemTarihi = DateTime.UtcNow;
+        entity.IslemNotu = string.IsNullOrWhiteSpace(islemNotu)
+            ? "Bakım ertelendi."
+            : islemNotu;
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    private static List<BakimPlani> SnapshotToList(QuerySnapshot snapshot)
+    public async Task MusteriIcinBakimPlanlariOlustur(
+        Musteri musteri, IReadOnlyCollection<DateTime> tarihler)
     {
-        List<BakimPlani> liste = new();
+        if (tarihler.Count == 0) return;
+        MusteriEntity? entity = await _db.Musteriler.FindAsync(musteri.Id);
+        if (entity == null) throw new InvalidOperationException("Müşteri bulunamadı.");
 
-        foreach (DocumentSnapshot doc in snapshot.Documents)
+        foreach (DateTime tarih in tarihler.Distinct())
+            _db.BakimPlanlari.Add(YeniBakimEntity(entity, UtcYap(tarih)));
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task MusteriBakimPlaniniGuncelle(
+        Musteri musteri,
+        IReadOnlyCollection<DateTime> tarihler,
+        string neden)
+    {
+        List<BakimPlaniEntity> bekleyenler = await _db.BakimPlanlari
+            .Where(x => x.MusteriId == musteri.Id && x.DurumKodu == "B")
+            .ToListAsync();
+        foreach (BakimPlaniEntity plan in bekleyenler)
         {
-            if (doc.Exists)
+            plan.DurumKodu = "I";
+            plan.IslemTarihi = DateTime.UtcNow;
+            plan.IslemNotu = neden;
+            plan.Aciklama = neden;
+        }
+        await _db.SaveChangesAsync();
+        await MusteriIcinBakimPlanlariOlustur(musteri, tarihler);
+    }
+
+    public async Task MusteriyeAitBakimlariPasifYap(int musteriId)
+    {
+        List<BakimPlaniEntity> bekleyenler = await _db.BakimPlanlari
+            .Where(x => x.MusteriId == musteriId && x.DurumKodu == "B")
+            .ToListAsync();
+        foreach (BakimPlaniEntity plan in bekleyenler)
+        {
+            plan.DurumKodu = "I";
+            plan.IslemTarihi = DateTime.UtcNow;
+            plan.IslemNotu = "Müşteri pasif edildiği için bakım iptal edildi.";
+            plan.Aciklama = "Müşteri pasif edildi.";
+        }
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<BakimPlani?> BakimTamamla(
+        int id,
+        List<int> personelIdleri,
+        string islemNotu,
+        IFormFile? oncesiResim,
+        IFormFile? sonrasiResim)
+    {
+        BakimPlaniEntity? bakim = await _db.BakimPlanlari
+            .Include(x => x.Personeller)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if (bakim == null) return null;
+
+        List<int> tekilPersoneller = personelIdleri.Where(x => x > 0).Distinct().ToList();
+        HashSet<int> mevcutPersoneller = bakim.Personeller.Select(x => x.PersonelId).ToHashSet();
+        HashSet<int> gecerliPersoneller = (await _db.Personeller
+            .Where(x => tekilPersoneller.Contains(x.Id) && x.DurumKodu != "P")
+            .Select(x => x.Id).ToListAsync()).ToHashSet();
+        if (gecerliPersoneller.Count != tekilPersoneller.Count)
+            throw new ArgumentException("Seçilen personellerden biri bulunamadı veya pasif.");
+
+        string oncesiDriveId = await ResmiDriveaKaydet(id, "oncesi", oncesiResim);
+        string sonrasiDriveId = await ResmiDriveaKaydet(id, "sonrasi", sonrasiResim);
+
+        foreach (int personelId in tekilPersoneller.Where(x => !mevcutPersoneller.Contains(x)))
+            _db.BakimPersonelleri.Add(new BakimPersonelEntity
             {
-                BakimPlani item = doc.ConvertTo<BakimPlani>();
-                item.Id = doc.Id;
-                liste.Add(item);
+                BakimId = id,
+                PersonelId = personelId
+            });
+
+        DetayEkle(id, "O", oncesiDriveId);
+        DetayEkle(id, "S", sonrasiDriveId);
+
+        bakim.DurumKodu = "T";
+        bakim.IslemNotu = islemNotu ?? string.Empty;
+        bakim.IslemTarihi = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        return await BakimGetir(id);
+    }
+
+    public async Task<List<BakimDetay>> BakimDetaylariGetir(int bakimId)
+    {
+        List<BakimDetayEntity> resimler = await _db.BakimDetaylari.AsNoTracking()
+            .Where(x => x.BakimId == bakimId)
+            .OrderBy(x => x.Id).ToListAsync();
+        List<BakimPersonelEntity> personeller = await _db.BakimPersonelleri.AsNoTracking()
+            .Include(x => x.Personel)
+            .Where(x => x.BakimId == bakimId)
+            .OrderBy(x => x.Personel.PersonelNo).ToListAsync();
+
+        List<BakimDetay> sonuc = new();
+        if (personeller.Count > 0)
+        {
+            foreach (BakimPersonelEntity baglanti in personeller)
+            {
+                if (resimler.Count == 0)
+                    sonuc.Add(PersonelDetayi(bakimId, baglanti, null));
+                else
+                    sonuc.AddRange(resimler.Select(resim => PersonelDetayi(bakimId, baglanti, resim)));
             }
         }
-
-        return liste;
-    }
-
-    private static DateTime UtcYap(DateTime tarih)
-    {
-        if (tarih.Kind == DateTimeKind.Utc)
-            return tarih;
-
-        return DateTime.SpecifyKind(tarih, DateTimeKind.Utc);
-    }
-    public async Task MusteriIcinBakimPlanlariOlustur(Musteri musteri)
-    {
-        if (musteri.BakimTarihleri == null || musteri.BakimTarihleri.Count == 0)
-            return;
-
-        foreach (DateTime tarih in musteri.BakimTarihleri)
+        else
         {
-            BakimPlani bakim = new()
-            {
-                MusteriId = musteri.Id ?? string.Empty,
-                MusteriNo = musteri.MusteriNo,
-                AdSoyad = $"{musteri.Ad} {musteri.Soyad}",
-                Telefon = musteri.Telefon,
-                BakimTarihi = UtcYap(tarih),
-                DurumKodu = "B",
-                Aciklama = "Müşteri kaydından otomatik oluşturuldu.",
-                KayitTarihi = DateTime.UtcNow
-            };
-
-            await _db.Collection(CollectionName).AddAsync(bakim);
+            sonuc.AddRange(resimler.Select(ResimDetayi));
         }
+        return sonuc;
     }
-    public async Task MusteriBakimPlaniniGuncelle(Musteri musteri, string neden)
-    {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .WhereEqualTo("MusteriNo", musteri.MusteriNo)
-            .WhereEqualTo("DurumKodu", "B")
-            .GetSnapshotAsync();
 
-        foreach (DocumentSnapshot doc in snapshot.Documents)
+    public async Task<BakimDetay?> BakimDetayGetir(int detayId)
+    {
+        BakimDetayEntity? entity = await _db.BakimDetaylari.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == detayId);
+        return entity == null ? null : ResimDetayi(entity);
+    }
+
+    private void DetayEkle(int bakimId, string tip, string driveDosyaId)
+    {
+        if (string.IsNullOrWhiteSpace(driveDosyaId)) return;
+        _db.BakimDetaylari.Add(new BakimDetayEntity
         {
-            await doc.Reference.UpdateAsync(new Dictionary<string, object>
-        {
-            { "DurumKodu", "I" },
-            { "IslemTarihi", DateTime.UtcNow },
-            { "IslemNotu", neden },
-            { "Aciklama", neden }
+            BakimId = bakimId,
+            ResimTip = tip,
+            ResimUrl = string.Empty,
+            DriveDosyaId = driveDosyaId,
+            LegacyKey = $"sql:{bakimId}:{tip}:{Guid.NewGuid():N}",
+            KayitTarihi = DateTime.UtcNow
         });
-        }
-
-        await MusteriIcinBakimPlanlariOlustur(musteri);
     }
-    public async Task MusteriyeAitBakimlariPasifYap(int musteriNo)
-    {
-        QuerySnapshot snapshot = await _db.Collection("bakimPlanlari")
-            .WhereEqualTo("MusteriNo", musteriNo)
-            .WhereEqualTo("DurumKodu", "B") // sadece bekleyenler
-            .GetSnapshotAsync();
 
-        foreach (var doc in snapshot.Documents)
-        {
-            await doc.Reference.UpdateAsync(new Dictionary<string, object>
-        {
-            { "DurumKodu", "I" },
-            { "IslemTarihi", DateTime.UtcNow },
-            { "IslemNotu", "Müşteri pasif edildiği için bakım iptal edildi." },
-            { "Aciklama", "Müşteri pasif edildi." }
-        });
-        }
+    private async Task<string> ResmiDriveaKaydet(int bakimId, string resimTipi, IFormFile? file)
+    {
+        if (file == null || file.Length == 0) return string.Empty;
+        if (file.Length > 15 * 1024 * 1024) throw new ArgumentException("Resim en fazla 15 MB olabilir.");
+        if (string.IsNullOrWhiteSpace(file.ContentType) ||
+            !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Yalnızca resim dosyası yüklenebilir.");
+
+        using Stream input = file.OpenReadStream();
+        using SKBitmap original = SKBitmap.Decode(input)
+            ?? throw new ArgumentException("Resim okunamadı.");
+        int genislik = Math.Min(original.Width, 1000);
+        int yukseklik = Math.Max(1, (int)Math.Round((double)original.Height / original.Width * genislik));
+        using SKBitmap resized = genislik == original.Width
+            ? original.Copy()
+            : original.Resize(new SKImageInfo(genislik, yukseklik), SKSamplingOptions.Default)
+                ?? throw new InvalidOperationException("Resim hazırlanamadı.");
+        using SKImage image = SKImage.FromBitmap(resized);
+        using SKData data = image.Encode(SKEncodedImageFormat.Jpeg, 65)
+            ?? throw new InvalidOperationException("Resim JPG biçimine dönüştürülemedi.");
+        using MemoryStream output = new();
+        data.SaveTo(output);
+        output.Position = 0;
+
+        string dosyaAdi = $"{bakimId}-{resimTipi}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}.jpg";
+        return await _driveStorage.JpegYukleAsync(output, dosyaAdi);
     }
-    public async Task<BakimPlani?> BakimTamamla(
-     string id,
-     List<int> personelIdleri,
-     string islemNotu,
-     IFormFile? oncesiResim,
-     IFormFile? sonrasiResim)
+
+    private static BakimPlaniEntity YeniBakimEntity(MusteriEntity musteri, DateTime tarih) => new()
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        string oncesiDriveDosyaId = await ResmiDriveaKaydet(
-            id,
-            "oncesi",
-            oncesiResim);
-
-        string sonrasiDriveDosyaId = await ResmiDriveaKaydet(
-            id,
-            "sonrasi",
-            sonrasiResim);
-
-        // 🔥 2. BAKIM GÜNCELLE
-        var updateData = new Dictionary<string, object>
-    {
-        { "DurumKodu", "T" },
-        { "IslemNotu", islemNotu ?? "" },
-        { "IslemTarihi", DateTime.UtcNow }
+        MusteriId = musteri.Id,
+        MusteriNo = musteri.MusteriNo,
+        AdSoyad = $"{musteri.Ad} {musteri.Soyad}".Trim(),
+        Telefon = musteri.Telefon,
+        BakimTarihi = tarih,
+        DurumKodu = "B",
+        Aciklama = "Müşteri kaydından otomatik oluşturuldu.",
+        KayitTarihi = DateTime.UtcNow
     };
 
-        await docRef.UpdateAsync(updateData);
-
-        // 🔥 3. DETAY KOLEKSİYONA YAZ
-        await BakimDetayEkle(
-            id,
-            personelIdleri,
-            oncesiDriveDosyaId,
-            sonrasiDriveDosyaId);
-
-        return await BakimGetir(id);
-    }
-
-    private async Task<string> ResmiDriveaKaydet(
-        string bakimId,
-        string resimTipi,
-        IFormFile? file)
+    private static BakimPlani ModeleCevir(BakimPlaniEntity x) => new()
     {
-        if (file == null || file.Length == 0)
-            return string.Empty;
+        Id = x.Id,
+        MusteriId = x.MusteriId,
+        MusteriNo = x.MusteriNo,
+        AdSoyad = x.AdSoyad,
+        Telefon = x.Telefon,
+        BakimTarihi = x.BakimTarihi,
+        DurumKodu = x.DurumKodu,
+        Aciklama = x.Aciklama,
+        KayitTarihi = x.KayitTarihi,
+        IslemTarihi = x.IslemTarihi,
+        IslemNotu = x.IslemNotu,
+        PersonelIdleri = x.Personeller.Select(p => p.PersonelId).ToList()
+    };
 
-        const long maksimumDosyaBoyutu = 15 * 1024 * 1024;
-
-        if (file.Length > maksimumDosyaBoyutu)
-            throw new Exception("Resim en fazla 15 MB olabilir.");
-
-        if (string.IsNullOrWhiteSpace(file.ContentType) ||
-            !file.ContentType.StartsWith(
-                "image/",
-                StringComparison.OrdinalIgnoreCase))
-        {
-            throw new Exception("Yalnızca resim dosyası yüklenebilir.");
-        }
-
-        using var inputStream = file.OpenReadStream();
-        using var original = SKBitmap.Decode(inputStream);
-
-        if (original == null)
-            throw new Exception("Resim okunamadı.");
-
-        int yeniGenislik = Math.Min(original.Width, 1000);
-        int yeniYukseklik = Math.Max(
-            1,
-            (int)Math.Round(
-                (double)original.Height /
-                original.Width *
-                yeniGenislik));
-
-        using SKBitmap? resized =
-            yeniGenislik == original.Width
-                ? original.Copy()
-                : original.Resize(
-                    new SKImageInfo(
-                        yeniGenislik,
-                        yeniYukseklik),
-                    SKSamplingOptions.Default);
-
-        if (resized == null)
-            throw new Exception("Resim hazırlanamadı.");
-
-        using var image = SKImage.FromBitmap(resized);
-        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 65);
-
-        if (data == null)
-            throw new Exception("Resim JPG biçimine dönüştürülemedi.");
-
-        using var outputStream = new MemoryStream();
-        data.SaveTo(outputStream);
-        outputStream.Position = 0;
-
-        string dosyaAdi =
-            $"{bakimId}-{resimTipi}-" +
-            $"{DateTime.UtcNow:yyyyMMddHHmmss}-" +
-            $"{Guid.NewGuid():N}.jpg";
-
-        return await _driveStorage.JpegYukleAsync(
-            outputStream,
-            dosyaAdi);
-    }
-    public async Task BakimDetayEkle(
-     string bakimId,
-     List<int> personelNolari,
-     string? oncesiDriveDosyaId,
-     string? sonrasiDriveDosyaId)
+    private static BakimDetay PersonelDetayi(
+        int bakimId, BakimPersonelEntity baglanti, BakimDetayEntity? resim) => new()
     {
-        foreach (var p in personelNolari)
-        {
-            // PERSONEL KAYDI HER ZAMAN OLUŞSUN
-            if (string.IsNullOrEmpty(oncesiDriveDosyaId) &&
-                string.IsNullOrEmpty(sonrasiDriveDosyaId))
-            {
-                await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
-                {
-                    BakimId = bakimId,
-                    PersonelNo = p,
-                    ResimTip = "",
-                    ResimUrl = "",
-                    DriveDosyaId = ""
-                });
+        Id = resim?.Id ?? 0,
+        BakimId = bakimId,
+        PersonelNo = baglanti.Personel.PersonelNo,
+        Ad = baglanti.Personel.Ad,
+        Soyad = baglanti.Personel.Soyad,
+        AdSoyad = $"{baglanti.Personel.Ad} {baglanti.Personel.Soyad}".Trim(),
+        ResimTip = resim?.ResimTip ?? string.Empty,
+        DriveDosyaId = resim?.DriveDosyaId ?? string.Empty,
+        ResimUrl = resim == null ? string.Empty : ResimAdresi(resim.Id),
+        KayitTarihi = resim?.KayitTarihi ?? DateTime.MinValue
+    };
 
-                continue;
-            }
-
-            // ÖNCESİ
-            if (!string.IsNullOrEmpty(oncesiDriveDosyaId))
-            {
-                await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
-                {
-                    BakimId = bakimId,
-                    PersonelNo = p,
-                    ResimTip = "O",
-                    ResimUrl = "",
-                    DriveDosyaId = oncesiDriveDosyaId
-                });
-            }
-
-            // SONRASI
-            if (!string.IsNullOrEmpty(sonrasiDriveDosyaId))
-            {
-                await _db.Collection("bakimDetaylari").AddAsync(new BakimDetay
-                {
-                    BakimId = bakimId,
-                    PersonelNo = p,
-                    ResimTip = "S",
-                    ResimUrl = "",
-                    DriveDosyaId = sonrasiDriveDosyaId
-                });
-            }
-        }
-    }
-    public async Task<List<BakimDetay>> BakimDetaylariGetir(string bakimId)
+    private static BakimDetay ResimDetayi(BakimDetayEntity x) => new()
     {
-        QuerySnapshot snapshot = await _db.Collection("bakimDetaylari")
-            .WhereEqualTo("BakimId", bakimId)
-            .GetSnapshotAsync();
+        Id = x.Id,
+        BakimId = x.BakimId,
+        ResimTip = x.ResimTip,
+        DriveDosyaId = x.DriveDosyaId,
+        ResimUrl = string.IsNullOrWhiteSpace(x.DriveDosyaId) ? string.Empty : ResimAdresi(x.Id),
+        KayitTarihi = x.KayitTarihi
+    };
 
-        List<BakimDetay> liste = new();
+    private static string ResimAdresi(int detayId) =>
+        $"/api/BakimPlanlari/detaylar/{detayId}/resim";
 
-        foreach (DocumentSnapshot doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                BakimDetay detay = doc.ConvertTo<BakimDetay>();
-                detay.Id = doc.Id;
-                ResimAdresiniHazirla(detay);
-                liste.Add(detay);
-            }
-        }
-
-        return liste;
-    }
-
-    public async Task<BakimDetay?> BakimDetayGetir(
-        string detayId)
-    {
-        DocumentSnapshot doc = await _db
-            .Collection("bakimDetaylari")
-            .Document(detayId)
-            .GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        BakimDetay detay = doc.ConvertTo<BakimDetay>();
-        detay.Id = doc.Id;
-        ResimAdresiniHazirla(detay);
-
-        return detay;
-    }
-
-    private static void ResimAdresiniHazirla(
-        BakimDetay detay)
-    {
-        if (!string.IsNullOrWhiteSpace(detay.DriveDosyaId) &&
-            !string.IsNullOrWhiteSpace(detay.Id))
-        {
-            detay.ResimUrl =
-                $"/api/BakimPlanlari/detaylar/{detay.Id}/resim";
-        }
-    }
-    public async Task<(int Guncellenen, int Eslesmeyen)>
-    EksikMusteriIdleriniDoldur()
-    {
-        QuerySnapshot musteriSnapshot =
-            await _db.Collection("musteriler")
-                .GetSnapshotAsync();
-
-        Dictionary<int, string> musteriIdMap = new();
-
-        foreach (DocumentSnapshot doc
-            in musteriSnapshot.Documents)
-        {
-            if (!doc.Exists)
-                continue;
-
-            Musteri musteri =
-                doc.ConvertTo<Musteri>();
-
-            musteriIdMap[musteri.MusteriNo] =
-                doc.Id;
-        }
-
-        QuerySnapshot bakimSnapshot =
-            await _db.Collection(CollectionName)
-                .GetSnapshotAsync();
-
-        int guncellenen = 0;
-        int eslesmeyen = 0;
-
-        foreach (DocumentSnapshot doc
-            in bakimSnapshot.Documents)
-        {
-            if (!doc.Exists)
-                continue;
-
-            BakimPlani bakim =
-                doc.ConvertTo<BakimPlani>();
-
-            // ID zaten varsa dokunma
-            if (!string.IsNullOrWhiteSpace(
-                bakim.MusteriId))
-            {
-                continue;
-            }
-
-            if (
-                musteriIdMap.TryGetValue(
-                    bakim.MusteriNo,
-                    out string? musteriId
-                )
-            )
-            {
-                await doc.Reference.UpdateAsync(
-                    new Dictionary<string, object>
-                    {
-                    { "MusteriId", musteriId }
-                    }
-                );
-
-                guncellenen++;
-            }
-            else
-            {
-                eslesmeyen++;
-            }
-        }
-
-        return (guncellenen, eslesmeyen);
-    }
-
+    private static DateTime UtcYap(DateTime tarih) => tarih.Kind == DateTimeKind.Utc
+        ? tarih
+        : DateTime.SpecifyKind(tarih, DateTimeKind.Utc);
 }

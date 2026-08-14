@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IptasPeyzajApi.Backend.Musteriler.Controllers;
 
-[Authorize]
+[Authorize(Roles = "1")]
 [ApiController]
 [Route("api/[controller]")]
 public class MusterilerController : ControllerBase
@@ -24,7 +24,7 @@ public class MusterilerController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(int id)
     {
         var musteri = await _musteriHelper.MusteriGetir(id);
 
@@ -42,7 +42,7 @@ public class MusterilerController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(string id, [FromBody] Musteri musteri)
+    public async Task<IActionResult> Update(int id, [FromBody] Musteri musteri)
     {
         var sonuc = await _musteriHelper.MusteriGuncelle(id, musteri);
 
@@ -53,7 +53,7 @@ public class MusterilerController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(int id)
     {
         var silindiMi = await _musteriHelper.MusteriSil(id);
 
@@ -63,7 +63,7 @@ public class MusterilerController : ControllerBase
         return Ok("Müşteri silindi.");
     }
     [HttpPut("{id}/durum")]
-    public async Task<IActionResult> DurumDegistir(string id, [FromBody] MusteriDurumDto dto)
+    public async Task<IActionResult> DurumDegistir(int id, [FromBody] MusteriDurumDto dto)
     {
         var sonuc = await _musteriHelper.MusteriDurumDegistir(id, dto.DurumKodu);
 

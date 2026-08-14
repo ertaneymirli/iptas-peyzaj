@@ -163,8 +163,8 @@ function musteriKullaniciEditorFormunuBagla() {
             method: duzenlemeMi ? "PUT" : "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                kullaniciId: kullaniciId,
-                musteriId: musteriId
+                kullaniciId: Number(kullaniciId),
+                musteriId: Number(musteriId)
             })
         });
 

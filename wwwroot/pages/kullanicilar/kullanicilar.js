@@ -215,9 +215,9 @@ function kullaniciPopupKapat() {
 
 async function kullaniciDuzenle(id) {
     const k = aktifKullaniciListesi.find(
-        x => (x.id ?? x.docId) === id
+        x => String(x.id ?? x.docId) === String(id)
     ) || kullaniciListesi.find(
-        x => (x.id ?? x.docId) === id
+        x => String(x.id ?? x.docId) === String(id)
     );
 
     if (!k) {

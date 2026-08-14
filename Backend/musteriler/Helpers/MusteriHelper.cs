@@ -1,18 +1,17 @@
-﻿using Google.Cloud.Firestore;
-using IptasPeyzajApi.Backend.Models;
-using IptasPeyzajApi.Backend.Musteriler.Models;
 using IptasPeyzajApi.Backend.BakimPlanlari.Helpers;
-
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.Data.Entities;
+using IptasPeyzajApi.Backend.Musteriler.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace IptasPeyzajApi.Backend.Musteriler.Helpers;
 
 public class MusteriHelper
 {
-    private readonly FirestoreDb _db;
+    private readonly IptasPeyzajDbContext _db;
     private readonly BakimPlaniHelper _bakimPlaniHelper;
-    private const string CollectionName = "musteriler";
 
-    public MusteriHelper(FirestoreDb db, BakimPlaniHelper bakimPlaniHelper)
+    public MusteriHelper(IptasPeyzajDbContext db, BakimPlaniHelper bakimPlaniHelper)
     {
         _db = db;
         _bakimPlaniHelper = bakimPlaniHelper;
@@ -20,322 +19,251 @@ public class MusteriHelper
 
     public async Task<List<Musteri>> TumMusterileriGetir()
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .OrderByDescending("KayitTarihi")
-            .GetSnapshotAsync();
-
-        List<Musteri> liste = new();
-
-        foreach (DocumentSnapshot doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                Musteri musteri = doc.ConvertTo<Musteri>();
-                musteri.Id = doc.Id;
-                liste.Add(musteri);
-            }
-        }
-        liste = liste.Where(x => x.DurumKodu != "P").ToList();
-        foreach (var m in liste)
-        {
-            var tarih = await SonrakiBakimTarihiGetir(m.MusteriNo);
-            m.BakimTarihi = tarih ?? default;
-        }
-        return liste;
-     
+        List<MusteriEntity> entities = await _db.Musteriler.AsNoTracking()
+            .Where(x => x.DurumKodu != "P")
+            .OrderByDescending(x => x.KayitTarihi)
+            .ToListAsync();
+        return await ModelleriHazirla(entities);
     }
 
-    public async Task<Musteri?> MusteriGetir(string id)
+    public async Task<Musteri?> MusteriGetir(int id)
     {
-        DocumentSnapshot doc = await _db.Collection(CollectionName)
-            .Document(id)
-            .GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        Musteri musteri = doc.ConvertTo<Musteri>();
-        musteri.Id = doc.Id;
-
-        return musteri;
+        MusteriEntity? entity = await _db.Musteriler.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if (entity == null) return null;
+        return (await ModelleriHazirla(new List<MusteriEntity> { entity })).Single();
     }
+
     public async Task<Musteri?> MusteriNodanGetir(int musteriNo)
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .WhereEqualTo("MusteriNo", musteriNo)
-            .Limit(1)
-            .GetSnapshotAsync();
-
-        if (snapshot.Count == 0)
-            return null;
-
-        DocumentSnapshot doc = snapshot.Documents[0];
-
-        Musteri musteri = doc.ConvertTo<Musteri>();
-        musteri.Id = doc.Id;
-
-        return musteri;
+        MusteriEntity? entity = await _db.Musteriler.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.MusteriNo == musteriNo);
+        if (entity == null) return null;
+        return (await ModelleriHazirla(new List<MusteriEntity> { entity })).Single();
     }
-    private void TcKontrol(string tc)
-    {
-        if (!string.IsNullOrEmpty(tc))
-        {
-            if (tc.Length != 11 || !tc.All(char.IsDigit))
-            {
-                throw new Exception("TC Kimlik No 11 haneli ve sadece rakam olmalıdır.");
-            }
-        }
-    }
+
     public async Task<Musteri> MusteriEkle(Musteri musteri)
     {
-        musteri.KayitTarihi = DateTime.UtcNow;
-        musteri.MusteriNo = await YeniMusteriNoOlustur();
-
+        TcKontrol(musteri.Tc);
         TarihleriUtcYap(musteri);
 
-        musteri.BakimTarihleri = BakimTarihleriOlustur(
-            musteri.BakimTarihi,
-            musteri.BitisTarihi,
-            musteri.PeriyodikBakim,
-            musteri.PeriyodikBakimTuru,
-            musteri.BelirliGunler
-        );
+        MusteriEntity entity = new()
+        {
+            MusteriNo = (await _db.Musteriler.MaxAsync(x => (int?)x.MusteriNo) ?? 0) + 1,
+            KayitTarihi = DateTime.UtcNow,
+            DurumKodu = "A"
+        };
+        DegerleriYaz(entity, musteri);
 
-        DocumentReference addedDoc = await _db.Collection(CollectionName).AddAsync(musteri);
-        musteri.Id = addedDoc.Id;
+        _db.Musteriler.Add(entity);
+        await _db.SaveChangesAsync();
 
-        await _bakimPlaniHelper.MusteriIcinBakimPlanlariOlustur(musteri);
+        musteri.Id = entity.Id;
+        musteri.MusteriNo = entity.MusteriNo;
+        musteri.KayitTarihi = entity.KayitTarihi;
+        musteri.DurumKodu = entity.DurumKodu;
 
+        List<DateTime> tarihler = BakimTarihleriOlustur(musteri);
+        await _bakimPlaniHelper.MusteriIcinBakimPlanlariOlustur(musteri, tarihler);
         return musteri;
     }
 
-    public async Task<Musteri?> MusteriGuncelle(string id, Musteri musteri)
+    public async Task<Musteri?> MusteriGuncelle(int id, Musteri musteri)
     {
         TcKontrol(musteri.Tc);
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        var eskiMusteri = doc.ConvertTo<Musteri>();
-
-        musteri.MusteriNo = eskiMusteri.MusteriNo;
-        musteri.KayitTarihi = eskiMusteri.KayitTarihi;
+        MusteriEntity? entity = await _db.Musteriler.FindAsync(id);
+        if (entity == null) return null;
 
         TarihleriUtcYap(musteri);
+        DateTime? eskiIlkBakim = await SonrakiBakimTarihiGetir(entity.MusteriNo);
+        bool planDegisti =
+            entity.BitisTarihi != musteri.BitisTarihi ||
+            entity.PeriyodikBakim != musteri.PeriyodikBakim ||
+            entity.PeriyodikBakimTuru != (musteri.PeriyodikBakimTuru ?? string.Empty) ||
+            entity.BelirliGunler != (musteri.BelirliGunler ?? string.Empty) ||
+            (eskiIlkBakim?.Date ?? DateTime.MinValue) != musteri.BakimTarihi.Date;
 
-        musteri.BakimTarihleri = BakimTarihleriOlustur(
-            musteri.BakimTarihi,
-            musteri.BitisTarihi,
-            musteri.PeriyodikBakim,
-            musteri.PeriyodikBakimTuru,
-            musteri.BelirliGunler
-        );
-        bool bakimPlaniDegisti =
-    eskiMusteri.BakimTarihi != musteri.BakimTarihi ||
-    eskiMusteri.BitisTarihi != musteri.BitisTarihi ||
-    eskiMusteri.PeriyodikBakim != musteri.PeriyodikBakim ||
-    eskiMusteri.PeriyodikBakimTuru != musteri.PeriyodikBakimTuru;
-        await docRef.SetAsync(musteri, SetOptions.Overwrite);
-        musteri.Id = id;
-        if (bakimPlaniDegisti)
+        DegerleriYaz(entity, musteri);
+        await _db.SaveChangesAsync();
+
+        musteri.Id = entity.Id;
+        musteri.MusteriNo = entity.MusteriNo;
+        musteri.KayitTarihi = entity.KayitTarihi;
+        musteri.DurumKodu = entity.DurumKodu;
+
+        if (planDegisti)
         {
             await _bakimPlaniHelper.MusteriBakimPlaniniGuncelle(
                 musteri,
-                "Müşteri bakım tarihi veya periyodu değiştiği için eski bekleyen bakım planı iptal edildi."
-            );
+                BakimTarihleriOlustur(musteri),
+                "Müşteri bakım tarihi veya periyodu değiştiği için eski bekleyen bakım planı iptal edildi.");
         }
-      
+
         return musteri;
     }
 
-    public async Task<bool> MusteriSil(string id)
+    public async Task<bool> MusteriSil(int id) => await MusteriDurumDegistir(id, "P");
+
+    public async Task<bool> MusteriDurumDegistir(int id, string durumKodu)
     {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
+        MusteriEntity? entity = await _db.Musteriler.FindAsync(id);
+        if (entity == null) return false;
 
-        if (!doc.Exists)
-            return false;
-
-        await docRef.DeleteAsync();
+        entity.DurumKodu = durumKodu.Trim().ToUpperInvariant();
+        await _db.SaveChangesAsync();
+        if (entity.DurumKodu == "P")
+            await _bakimPlaniHelper.MusteriyeAitBakimlariPasifYap(entity.Id);
         return true;
     }
 
-    private async Task<int> YeniMusteriNoOlustur()
-    {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .OrderByDescending("MusteriNo")
-            .Limit(1)
-            .GetSnapshotAsync();
-
-        if (snapshot.Count == 0)
-            return 1;
-
-        int sonMusteriNo = snapshot.Documents[0].GetValue<int>("MusteriNo");
-        return sonMusteriNo + 1;
-    }
-
-    private static void TarihleriUtcYap(Musteri musteri)
-    {
-        musteri.DogumTarihi = UtcYap(musteri.DogumTarihi);
-        musteri.SozlesmeTarihi = UtcYap(musteri.SozlesmeTarihi);
-        musteri.GorusmeTarihi = UtcYap(musteri.GorusmeTarihi);
-        musteri.BaslangicTarihi = UtcYap(musteri.BaslangicTarihi);
-        musteri.BitisTarihi = UtcYap(musteri.BitisTarihi);
-        musteri.BakimTarihi = UtcYap(musteri.BakimTarihi);
-    }
-
-    private static DateTime UtcYap(DateTime tarih)
-    {
-        if (tarih.Kind == DateTimeKind.Utc)
-            return tarih;
-
-        return DateTime.SpecifyKind(tarih, DateTimeKind.Utc);
-    }
-
-    private static List<DateTime> BakimTarihleriOlustur(
- DateTime ilkBakimTarihi,
- DateTime bitisTarihi,
- int periyodikBakim,
- string periyodikBakimTuru,
- string? belirliGunler = null)
-    {
-        List<DateTime> tarihler = new();
-
-        // 🔥 KENDİM BELİRLEYECEĞİM
-        if ((periyodikBakimTuru ?? "").ToLower().Contains("kendim"))
-        {
-            if (string.IsNullOrWhiteSpace(belirliGunler))
-                return tarihler;
-
-            var gunler = belirliGunler
-                .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                .Select(x =>
-                {
-                    bool ok = int.TryParse(x.Trim(), out int gun);
-                    return ok ? gun : 0;
-                })
-                .Where(x => x >= 1 && x <= 31)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToList();
-
-            if (gunler.Count == 0)
-                return tarihler;
-
-            DateTime ay = DateTime.SpecifyKind(
-     new DateTime(
-         ilkBakimTarihi.Year,
-         ilkBakimTarihi.Month,
-         1
-     ),
-     DateTimeKind.Utc
- );
-
-            while (ay <= bitisTarihi)
-            {
-                foreach (var gun in gunler)
-                {
-                    int ayinSonGunu = DateTime.DaysInMonth(ay.Year, ay.Month);
-
-                    if (gun > ayinSonGunu)
-                        continue;
-
-                    DateTime tarih = DateTime.SpecifyKind(
-    new DateTime(ay.Year, ay.Month, gun),
-    DateTimeKind.Utc
-);
-
-                    if (tarih >= ilkBakimTarihi && tarih <= bitisTarihi)
-                        tarihler.Add(tarih);
-                }
-
-                ay = ay.AddMonths(1);
-            }
-
-            return tarihler;
-        }
-
-        // 🔥 NORMAL SİSTEM
-        if (periyodikBakim <= 0)
-            return tarihler;
-
-        DateTime tarihNormal = ilkBakimTarihi;
-
-        while (tarihNormal <= bitisTarihi)
-        {
-            tarihler.Add(tarihNormal);
-
-            tarihNormal = (periyodikBakimTuru ?? "").ToLower() switch
-            {
-                "gün" or "gun" => tarihNormal.AddDays(periyodikBakim),
-                "hafta" => tarihNormal.AddDays(periyodikBakim * 7),
-                "ay" => tarihNormal.AddMonths(periyodikBakim),
-                "yıl" or "yil" => tarihNormal.AddYears(periyodikBakim),
-                _ => tarihNormal.AddMonths(periyodikBakim)
-            };
-        }
-
-        return tarihler;
-
-}
-
-    public async Task<bool> MusteriDurumDegistir(string id, string durumKodu)
-    {
-        DocumentReference docRef = _db.Collection(CollectionName).Document(id);
-        DocumentSnapshot doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return false;
-
-        Musteri musteri = doc.ConvertTo<Musteri>();
-        musteri.Id = doc.Id;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-    {
-        { "DurumKodu", durumKodu }
-    });
-
-        // 🔥 BURASI ÖNEMLİ
-        if (durumKodu == "P")
-        {
-            await _bakimPlaniHelper.MusteriyeAitBakimlariPasifYap(musteri.MusteriNo);
-        }
-
-        return true;
-    }
     public async Task<List<Musteri>> MusterileriDurumaGoreGetir(string durumKodu)
     {
-        QuerySnapshot snapshot = await _db.Collection(CollectionName)
-            .GetSnapshotAsync();
+        string durum = durumKodu.Trim().ToUpperInvariant();
+        List<MusteriEntity> entities = await _db.Musteriler.AsNoTracking()
+            .Where(x => x.DurumKodu == durum)
+            .OrderByDescending(x => x.KayitTarihi)
+            .ToListAsync();
+        return await ModelleriHazirla(entities);
+    }
 
-        List<Musteri> liste = new();
+    public Task<DateTime?> SonrakiBakimTarihiGetir(int musteriNo) =>
+        _db.BakimPlanlari.AsNoTracking()
+            .Where(x => x.MusteriNo == musteriNo && x.DurumKodu == "B")
+            .OrderBy(x => x.BakimTarihi)
+            .Select(x => (DateTime?)x.BakimTarihi)
+            .FirstOrDefaultAsync();
 
-        foreach (DocumentSnapshot doc in snapshot.Documents)
+    private async Task<List<Musteri>> ModelleriHazirla(List<MusteriEntity> entities)
+    {
+        int[] ids = entities.Select(x => x.Id).ToArray();
+        Dictionary<int, DateTime> sonrakiTarihler = await _db.BakimPlanlari.AsNoTracking()
+            .Where(x => ids.Contains(x.MusteriId) && x.DurumKodu == "B")
+            .GroupBy(x => x.MusteriId)
+            .Select(g => new { MusteriId = g.Key, Tarih = g.Min(x => x.BakimTarihi) })
+            .ToDictionaryAsync(x => x.MusteriId, x => x.Tarih);
+
+        return entities.Select(x => ModeleCevir(
+            x,
+            sonrakiTarihler.TryGetValue(x.Id, out DateTime tarih) ? tarih : default)).ToList();
+    }
+
+    private static Musteri ModeleCevir(MusteriEntity x, DateTime bakimTarihi) => new()
+    {
+        Id = x.Id,
+        MusteriNo = x.MusteriNo,
+        Ad = x.Ad,
+        Soyad = x.Soyad,
+        Tc = x.Tc,
+        DogumTarihi = x.DogumTarihi,
+        Cinsiyet = x.Cinsiyet,
+        Telefon = x.Telefon,
+        CaddeSokak = x.CaddeSokak,
+        Mahalle = x.Mahalle,
+        No = x.No,
+        Daire = x.Daire,
+        Sehir = x.Sehir,
+        Adres = x.Adres,
+        MekanTipi = x.MekanTipi,
+        SozlesmeTarihi = x.SozlesmeTarihi,
+        GorusmeTarihi = x.GorusmeTarihi,
+        BaslangicTarihi = x.BaslangicTarihi,
+        BitisTarihi = x.BitisTarihi,
+        BakimTarihi = bakimTarihi,
+        PeriyodikBakim = x.PeriyodikBakim,
+        PeriyodikBakimTuru = x.PeriyodikBakimTuru,
+        BelirliGunler = x.BelirliGunler,
+        Aciklama = x.Aciklama,
+        KayitTarihi = x.KayitTarihi,
+        DurumKodu = x.DurumKodu
+    };
+
+    private static void DegerleriYaz(MusteriEntity x, Musteri m)
+    {
+        x.Ad = m.Ad?.Trim() ?? string.Empty;
+        x.Soyad = m.Soyad?.Trim() ?? string.Empty;
+        x.Tc = m.Tc?.Trim() ?? string.Empty;
+        x.DogumTarihi = m.DogumTarihi;
+        x.Cinsiyet = m.Cinsiyet?.Trim() ?? string.Empty;
+        x.Telefon = m.Telefon?.Trim() ?? string.Empty;
+        x.CaddeSokak = m.CaddeSokak?.Trim() ?? string.Empty;
+        x.Mahalle = m.Mahalle?.Trim() ?? string.Empty;
+        x.No = m.No?.Trim() ?? string.Empty;
+        x.Daire = m.Daire?.Trim() ?? string.Empty;
+        x.Sehir = m.Sehir?.Trim() ?? string.Empty;
+        x.Adres = string.IsNullOrWhiteSpace(m.Adres)
+            ? $"{x.Mahalle} Mah. {x.CaddeSokak} No:{x.No} Daire:{x.Daire} {x.Sehir}".Trim()
+            : m.Adres.Trim();
+        x.MekanTipi = m.MekanTipi?.Trim() ?? string.Empty;
+        x.SozlesmeTarihi = m.SozlesmeTarihi;
+        x.GorusmeTarihi = m.GorusmeTarihi;
+        x.BaslangicTarihi = m.BaslangicTarihi;
+        x.BitisTarihi = m.BitisTarihi;
+        x.PeriyodikBakim = m.PeriyodikBakim;
+        x.PeriyodikBakimTuru = m.PeriyodikBakimTuru?.Trim() ?? string.Empty;
+        x.BelirliGunler = m.BelirliGunler?.Trim() ?? string.Empty;
+        x.Aciklama = m.Aciklama ?? string.Empty;
+    }
+
+    private static List<DateTime> BakimTarihleriOlustur(Musteri m)
+    {
+        List<DateTime> tarihler = new();
+        DateTime ilk = UtcYap(m.BakimTarihi);
+        DateTime bitis = UtcYap(m.BitisTarihi);
+        string tur = (m.PeriyodikBakimTuru ?? string.Empty).ToLowerInvariant();
+
+        if (tur.Contains("kendim"))
         {
-            if (doc.Exists)
+            int[] gunler = (m.BelirliGunler ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => int.TryParse(x.Trim(), out int gun) ? gun : 0)
+                .Where(x => x is >= 1 and <= 31).Distinct().OrderBy(x => x).ToArray();
+            DateTime ay = new(ilk.Year, ilk.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            while (ay <= bitis)
             {
-                Musteri musteri = doc.ConvertTo<Musteri>();
-                musteri.Id = doc.Id;
-                liste.Add(musteri);
+                foreach (int gun in gunler)
+                {
+                    if (gun > DateTime.DaysInMonth(ay.Year, ay.Month)) continue;
+                    DateTime tarih = new(ay.Year, ay.Month, gun, 0, 0, 0, DateTimeKind.Utc);
+                    if (tarih >= ilk && tarih <= bitis) tarihler.Add(tarih);
+                }
+                ay = ay.AddMonths(1);
             }
+            return tarihler;
         }
 
-        return liste.Where(x => x.DurumKodu == durumKodu).ToList();
+        if (m.PeriyodikBakim <= 0 || ilk > bitis) return tarihler;
+        for (DateTime tarih = ilk; tarih <= bitis;)
+        {
+            tarihler.Add(tarih);
+            tarih = tur switch
+            {
+                "gün" or "gun" => tarih.AddDays(m.PeriyodikBakim),
+                "hafta" => tarih.AddDays(m.PeriyodikBakim * 7),
+                "ay" => tarih.AddMonths(m.PeriyodikBakim),
+                "yıl" or "yil" => tarih.AddYears(m.PeriyodikBakim),
+                _ => tarih.AddMonths(m.PeriyodikBakim)
+            };
+        }
+        return tarihler;
     }
-    public async Task<DateTime?> SonrakiBakimTarihiGetir(int musteriNo)
+
+    private static void TcKontrol(string? tc)
     {
-        QuerySnapshot snapshot = await _db.Collection("bakimPlanlari")
-            .WhereEqualTo("MusteriNo", musteriNo)
-            .WhereEqualTo("DurumKodu", "B") // 🔥 sadece bekleyen
-            .OrderBy("BakimTarihi")
-            .Limit(1)
-            .GetSnapshotAsync();
-
-        if (snapshot.Count == 0)
-            return null;
-
-        return snapshot.Documents[0].GetValue<DateTime>("BakimTarihi");
+        if (!string.IsNullOrEmpty(tc) && (tc.Length != 11 || !tc.All(char.IsDigit)))
+            throw new ArgumentException("TC Kimlik No 11 haneli ve sadece rakam olmalıdır.");
     }
+
+    private static void TarihleriUtcYap(Musteri m)
+    {
+        m.DogumTarihi = UtcYap(m.DogumTarihi);
+        m.SozlesmeTarihi = UtcYap(m.SozlesmeTarihi);
+        m.GorusmeTarihi = UtcYap(m.GorusmeTarihi);
+        m.BaslangicTarihi = UtcYap(m.BaslangicTarihi);
+        m.BitisTarihi = UtcYap(m.BitisTarihi);
+        m.BakimTarihi = UtcYap(m.BakimTarihi);
+    }
+
+    private static DateTime UtcYap(DateTime tarih) => tarih.Kind == DateTimeKind.Utc
+        ? tarih
+        : DateTime.SpecifyKind(tarih, DateTimeKind.Utc);
 }

@@ -23,10 +23,10 @@ public class PersonellerController : ControllerBase
         return Ok(liste);
     }
 
-    [HttpGet("{docId}")]
-    public async Task<IActionResult> GetById(string docId)
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
     {
-        var personel = await _personelHelper.PersonelGetir(docId);
+        var personel = await _personelHelper.PersonelGetir(id);
 
         if (personel == null)
             return NotFound("Personel bulunamadı.");
@@ -40,10 +40,10 @@ public class PersonellerController : ControllerBase
         return Ok(sonuc);
     }
 
-    [HttpPut("{docId}")]
-    public async Task<IActionResult> Update(string docId, [FromBody] Personel personel)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, [FromBody] Personel personel)
     {
-        var sonuc = await _personelHelper.PersonelGuncelle(docId, personel);
+        var sonuc = await _personelHelper.PersonelGuncelle(id, personel);
 
         if (sonuc == null)
             return NotFound("Personel bulunamadı.");
@@ -51,10 +51,10 @@ public class PersonellerController : ControllerBase
         return Ok(sonuc);
     }
 
-    [HttpPut("{docId}/durum")]
-    public async Task<IActionResult> DurumGuncelle(string docId, [FromBody] PersonelDurumDto dto)
+    [HttpPut("{id:int}/durum")]
+    public async Task<IActionResult> DurumGuncelle(int id, [FromBody] PersonelDurumDto dto)
     {
-        var sonuc = await _personelHelper.DurumGuncelle(docId, dto.DurumKodu);
+        var sonuc = await _personelHelper.DurumGuncelle(id, dto.DurumKodu);
 
         if (sonuc == null)
             return NotFound("Personel bulunamadı.");

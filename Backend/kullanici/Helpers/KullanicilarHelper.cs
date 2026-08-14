@@ -1,5 +1,8 @@
-﻿using Google.Cloud.Firestore;
+using IptasPeyzajApi.Backend.Data;
+using IptasPeyzajApi.Backend.Data.Entities;
 using IptasPeyzajApi.Backend.kullanici.Model;
+using IptasPeyzajApi.Backend.kullanici.Model.DTO;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,111 +10,127 @@ namespace IptasPeyzajApi.Backend.Kullanicilar.Helpers;
 
 public class KullaniciHelper
 {
-    private readonly FirestoreDb _db;
-    private const string CollectionName = "kullanicilar";
+    private readonly IptasPeyzajDbContext _db;
 
-    public KullaniciHelper(FirestoreDb db)
-    {
-        _db = db;
-    }
+    public KullaniciHelper(IptasPeyzajDbContext db) => _db = db;
 
     public async Task<List<Kullanici>> TumKullanicilariGetir()
     {
-        var snapshot = await _db.Collection(CollectionName).GetSnapshotAsync();
-
-        List<Kullanici> liste = new();
-
-        foreach (var doc in snapshot.Documents)
-        {
-            if (doc.Exists)
-            {
-                var k = doc.ConvertTo<Kullanici>();
-                k.Id = doc.Id;
-                k.SifreHash = "";
-                liste.Add(k);
-            }
-        }
-
-        return liste.OrderBy(x => x.KullaniciAdi).ToList();
+        List<KullaniciEntity> entities = await _db.Kullanicilar.AsNoTracking()
+            .OrderByDescending(x => x.KayitTarihi).ToListAsync();
+        return entities.Select(ModeleCevir).ToList();
     }
 
-    public async Task<Kullanici> KullaniciEkle(Kullanici kullanici)
+    public async Task<Kullanici?> KullaniciGetir(int id)
     {
-        kullanici.KayitTarihi = DateTime.UtcNow;
-        kullanici.AktifMi = true;
-
-        if (!string.IsNullOrWhiteSpace(kullanici.Sifre))
-            kullanici.SifreHash = Hashle(kullanici.Sifre);
-
-        var docRef = await _db.Collection(CollectionName).AddAsync(kullanici);
-        kullanici.Id = docRef.Id;
-        kullanici.SifreHash = "";
-
-        return kullanici;
+        KullaniciEntity? entity = await _db.Kullanicilar.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id);
+        return entity == null ? null : ModeleCevir(entity);
     }
 
-    public async Task<Kullanici?> KullaniciGuncelle(string id, Kullanici kullanici)
+    public async Task<Kullanici> KullaniciEkle(KullaniciCreateDto dto)
     {
-        var docRef = _db.Collection(CollectionName).Document(id);
-        var doc = await docRef.GetSnapshotAsync();
+        string kullaniciAdi = dto.KullaniciAdi.Trim();
+        if (await _db.Kullanicilar.AnyAsync(x => x.KullaniciAdi == kullaniciAdi))
+            throw new InvalidOperationException("Bu kullanıcı adı zaten kayıtlı.");
+        if (string.IsNullOrWhiteSpace(dto.Sifre))
+            throw new ArgumentException("Şifre boş olamaz.");
 
-        if (!doc.Exists)
-            return null;
-
-        var data = new Dictionary<string, object>
+        KullaniciEntity entity = new()
         {
-            { "KullaniciAdi", kullanici.KullaniciAdi ?? "" },
-            { "Ad", kullanici.Ad ?? "" },
-            { "Soyad", kullanici.Soyad ?? "" },
-            { "CepTelefonNo", kullanici.CepTelefonNo ?? "" },
-            { "Mail", kullanici.Mail ?? "" },
-            { "Rol", kullanici.Rol ?? "2" }
+            KullaniciAdi = kullaniciAdi,
+            Ad = dto.Ad?.Trim() ?? string.Empty,
+            Soyad = dto.Soyad?.Trim() ?? string.Empty,
+            DogumTarihi = UtcYap(dto.DogumTarihi),
+            Tc = dto.Tc?.Trim() ?? string.Empty,
+            TelefonNo = dto.TelefonNo?.Trim() ?? string.Empty,
+            CepTelefonNo = dto.CepTelefonNo?.Trim() ?? string.Empty,
+            Adres = dto.Adres?.Trim() ?? string.Empty,
+            Mail = dto.Mail?.Trim() ?? string.Empty,
+            SifreHash = Hashle(dto.Sifre),
+            Rol = dto.Rol?.Trim() ?? "2",
+            AktifMi = true,
+            KayitTarihi = DateTime.UtcNow
         };
 
-        if (!string.IsNullOrWhiteSpace(kullanici.Sifre))
-        {
-            data.Add("SifreHash", Hashle(kullanici.Sifre));
-        }
-
-        await docRef.UpdateAsync(data);
-
-        return await KullaniciGetir(id);
+        _db.Kullanicilar.Add(entity);
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<Kullanici?> KullaniciGetir(string id)
+    public async Task<Kullanici?> KullaniciGuncelle(int id, KullaniciUpdateDto dto)
     {
-        var doc = await _db.Collection(CollectionName).Document(id).GetSnapshotAsync();
+        KullaniciEntity? entity = await _db.Kullanicilar.FindAsync(id);
+        if (entity == null) return null;
 
-        if (!doc.Exists)
-            return null;
+        string kullaniciAdi = dto.KullaniciAdi.Trim();
+        if (await _db.Kullanicilar.AnyAsync(x => x.Id != id && x.KullaniciAdi == kullaniciAdi))
+            throw new InvalidOperationException("Bu kullanıcı adı zaten kayıtlı.");
 
-        var k = doc.ConvertTo<Kullanici>();
-        k.Id = doc.Id;
-        k.SifreHash = "";
+        entity.KullaniciAdi = kullaniciAdi;
+        entity.Ad = dto.Ad?.Trim() ?? string.Empty;
+        entity.Soyad = dto.Soyad?.Trim() ?? string.Empty;
+        entity.DogumTarihi = UtcYap(dto.DogumTarihi);
+        entity.Tc = dto.Tc?.Trim() ?? string.Empty;
+        entity.TelefonNo = dto.TelefonNo?.Trim() ?? string.Empty;
+        entity.CepTelefonNo = dto.CepTelefonNo?.Trim() ?? string.Empty;
+        entity.Adres = dto.Adres?.Trim() ?? string.Empty;
+        entity.Mail = dto.Mail?.Trim() ?? string.Empty;
+        entity.Rol = dto.Rol?.Trim() ?? "2";
+        entity.AktifMi = dto.AktifMi;
+        if (!string.IsNullOrWhiteSpace(dto.Sifre))
+            entity.SifreHash = Hashle(dto.Sifre);
 
-        return k;
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
 
-    public async Task<Kullanici?> DurumGuncelle(string id, bool aktifMi)
+    public async Task<Kullanici?> DurumGuncelle(int id, bool aktifMi)
     {
-        var docRef = _db.Collection(CollectionName).Document(id);
-        var doc = await docRef.GetSnapshotAsync();
-
-        if (!doc.Exists)
-            return null;
-
-        await docRef.UpdateAsync(new Dictionary<string, object>
-        {
-            { "AktifMi", aktifMi }
-        });
-
-        return await KullaniciGetir(id);
+        KullaniciEntity? entity = await _db.Kullanicilar.FindAsync(id);
+        if (entity == null) return null;
+        entity.AktifMi = aktifMi;
+        await _db.SaveChangesAsync();
+        return ModeleCevir(entity);
     }
+
+    public async Task<Kullanici?> GirisYap(LoginDto dto)
+    {
+        string ad = dto.KullaniciAdi.Trim();
+        string hash = Hashle(dto.Sifre);
+        KullaniciEntity? entity = await _db.Kullanicilar.AsNoTracking()
+            .FirstOrDefaultAsync(x =>
+                x.KullaniciAdi == ad && x.SifreHash == hash && x.AktifMi);
+        return entity == null ? null : ModeleCevir(entity);
+    }
+
+    private static Kullanici ModeleCevir(KullaniciEntity x) => new()
+    {
+        Id = x.Id,
+        KullaniciAdi = x.KullaniciAdi,
+        Ad = x.Ad,
+        Soyad = x.Soyad,
+        DogumTarihi = x.DogumTarihi,
+        Tc = x.Tc,
+        TelefonNo = x.TelefonNo,
+        CepTelefonNo = x.CepTelefonNo,
+        Adres = x.Adres,
+        Mail = x.Mail,
+        SifreHash = string.Empty,
+        Rol = x.Rol,
+        AktifMi = x.AktifMi,
+        KayitTarihi = x.KayitTarihi
+    };
 
     private static string Hashle(string sifre)
     {
-        using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(sifre));
-        return Convert.ToHexString(bytes);
+        using SHA256 sha = SHA256.Create();
+        return Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(sifre)));
     }
+
+    private static DateTime? UtcYap(DateTime? tarih) => tarih == null
+        ? null
+        : tarih.Value.Kind == DateTimeKind.Utc
+            ? tarih
+            : DateTime.SpecifyKind(tarih.Value, DateTimeKind.Utc);
 }
